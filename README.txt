@@ -33,6 +33,15 @@ FARTOVIY — Angular-каталог
   Результат: dist/index.html и соседние файлы.
   При сборке dist/ пересоздаётся; редактировать нужно src/.
 
+Проверка FE в GitHub Actions
+  Workflow: .github/workflows/fe-ci.yml.
+  Запускается при push в quality/main и при создании или обновлении PR в main.
+  Устанавливает Node.js 22, выполняет npm ci и production-сборку npm run build.
+  Результат виден во вкладке Actions и в проверках PR: FE build / Production build.
+  Автопубликация в Sites этим workflow не выполняется.
+  Для запрета merge при ошибке сборки добавьте Production build в required checks
+  правила защиты ветки main в настройках GitHub.
+
 Публикация FE в Sites
   Публичный адрес: https://fartoviy.nimblejam34.chatgpt.site
   Доступ по ссылке без авторизации; этот адрес можно использовать для QR-кода.

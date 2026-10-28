@@ -1,0 +1,38 @@
+name: FE build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [quality, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fe-build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build FE
+        run: npm run build

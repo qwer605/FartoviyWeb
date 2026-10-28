@@ -20,8 +20,18 @@ FARTOVIY — Angular-каталог
 
 Оболочка и навигация: src/app/app.ts / .html / .css
 Товары и корзина: src/app/core/catalog.ts, store.ts
-Переводы RU/УКР: src/app/core/i18n.ts, translations.ts
+Переводы EN/RU/УКР: src/app/core/i18n.ts, translations.ts
+Выбор языка: src/app/core/language.ts
 Фотографии: public/assets/
+
+Язык интерфейса
+  При первом посещении выбирается первый поддерживаемый язык из настроек браузера.
+  Поддерживаются английский (en), русский (ru) и украинский (uk), включая ru-RU/uk-UA.
+  Если подходящего языка нет, используется английский.
+  Ручной выбор EN/RU/УКР сохраняется и имеет приоритет при следующих посещениях.
+  Автоматически выбранный язык не записывается как ручное предпочтение.
+  Старое значение fartoviy-language игнорируется: оно сохраняло и автоматический RU.
+  Проверка выбора языка и переводов: npm test.
 
 Глобального CSS нет. Баннеры, иконки, избранное, демооплата,
 камера и computer vision удалены из текущей реализации.
@@ -36,7 +46,7 @@ FARTOVIY — Angular-каталог
 CI/CD FE в GitHub Actions и GitHub Pages
   Workflow: .github/workflows/fe-ci.yml.
   Запускается при push в quality/main и при создании или обновлении PR в main.
-  Устанавливает Node.js 22, выполняет npm ci и production-сборку npm run build.
+  Устанавливает Node.js 22, выполняет npm ci, npm test и production-сборку npm run build.
   Собирает приложение с base href /FartoviyWeb/ для адреса репозитория.
   PR и push в quality только проверяют сборку.
   Каждый push в main, включая merge PR quality -> main, публикует dist/ в Pages.

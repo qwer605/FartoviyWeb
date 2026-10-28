@@ -1,5 +1,9 @@
 import { Injectable, Pipe, PipeTransform, effect, inject, signal } from '@angular/core';
-import { ukrainian } from './translations';
+import { isLanguage, Language, resolveLanguage } from './language';
+import { translateText } from './translations';
+
+// The old key also stored automatic Russian defaults, not just manual choices.
+const LANGUAGE_PREFERENCE_KEY = 'fartoviy-language-preference';
 
 export function readStorage(key: string): unknown {
   try { return JSON.parse(localStorage.getItem(key) ?? 'null'); } catch { return null; }
@@ -10,27 +14,32 @@ export function writeStorage(key: string, value: unknown): boolean {
 
 @Injectable({ providedIn: 'root' })
 export class I18n {
-  readonly language = signal<'ru' | 'uk'>(readStorage('fartoviy-language') === 'uk' ? 'uk' : 'ru');
-  private readonly pattern = new RegExp(Object.keys(ukrainian).sort((a, b) => b.length - a.length)
-    .map(key => key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
+  readonly language = signal<Language>(this.initialLanguage());
 
   constructor() {
-    // Keep the language preference compatible with the original demo.
-    try { if (localStorage.getItem('fartoviy-language') === 'uk') this.language.set('uk'); } catch { /* Default to Russian. */ }
     effect(() => {
       document.documentElement.lang = this.language();
-      document.title = 'FARTOVIY — каталог';
-      try { localStorage.setItem('fartoviy-language', this.language()); } catch { /* Optional persistence. */ }
+      document.title = this.text('FARTOVIY — каталог');
+      document.querySelector('meta[name="description"]')?.setAttribute('content',
+        this.text('Демо: каталог товаров, информация о товаре и корзина.'));
     });
   }
 
   text(value: string, language = this.language()): string {
-    return language === 'uk' ? value.replace(this.pattern, match => ukrainian[match]) : value;
+    return translateText(value, language);
   }
 
   setLanguage(event: Event): void {
     const language = (event.target as HTMLSelectElement).value;
-    if (language === 'ru' || language === 'uk') this.language.set(language);
+    if (!isLanguage(language)) return;
+    this.language.set(language);
+    writeStorage(LANGUAGE_PREFERENCE_KEY, language);
+  }
+
+  private initialLanguage(): Language {
+    const languages = typeof navigator === 'undefined' ? []
+      : navigator.languages?.length ? navigator.languages : [navigator.language];
+    return resolveLanguage(readStorage(LANGUAGE_PREFERENCE_KEY), languages);
   }
 }
 

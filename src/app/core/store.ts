@@ -22,7 +22,7 @@ export class Store {
 
   money(amount: number): string {
     const language = this.i18n.language();
-    return new Intl.NumberFormat(language).format(amount) + (language === 'uk' ? ' у.о.' : ' у.е.');
+    return new Intl.NumberFormat(language).format(amount) + ' ' + this.i18n.text('у.е.');
   }
 
   add(product: Product, size: string): boolean {

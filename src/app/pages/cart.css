@@ -1,0 +1,25 @@
+:host { display: block; }
+h1 { margin: 0 0 16px; font-size: 26px; }
+ul { margin: 0; padding: 0; list-style: none; }
+li {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 16px 0;
+  border-bottom: 1px solid #ddd;
+}
+img { display: block; width: 96px; height: 96px; object-fit: contain; }
+h2 { margin: 0 0 8px; font-size: 18px; }
+p { margin: 0 0 8px; }
+a { color: #174c85; }
+button { font: inherit; padding: 4px 10px; cursor: pointer; }
+button:disabled { cursor: default; }
+.quantity { display: flex; align-items: center; gap: 12px; }
+.item-total { text-align: right; }
+.total { margin: 20px 0; font-size: 20px; }
+@media (max-width: 500px) {
+  li { grid-template-columns: 72px minmax(0, 1fr); gap: 12px; }
+  img { width: 72px; height: 72px; }
+  .item-total { grid-column: 2; text-align: left; }
+}

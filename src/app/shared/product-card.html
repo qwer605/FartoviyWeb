@@ -1,0 +1,8 @@
+<article>
+  <a [routerLink]="['/product', product().id]" [attr.aria-label]="product().name | t">
+    <img [src]="product().image" [alt]="product().name | t" loading="lazy" width="300" height="240">
+  </a>
+  <h2><a [routerLink]="['/product', product().id]">{{ product().name | t }}</a></h2>
+  <p>{{ store.money(product().price) }}</p>
+  <a [routerLink]="['/product', product().id]">{{ 'Подробнее' | t }}</a>
+</article>

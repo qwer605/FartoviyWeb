@@ -1,0 +1,16 @@
+:host { display: block; min-width: 0; }
+article {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+}
+img {
+  display: block;
+  width: 100%;
+  height: 200px;
+  object-fit: contain;
+}
+h2 { margin: 12px 0 8px; font-size: 18px; }
+p { margin: 0 0 12px; }
+a { color: #174c85; }

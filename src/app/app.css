@@ -1,0 +1,28 @@
+:host {
+  display: block;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px;
+  color: #222;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+}
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+a { color: #174c85; }
+.active { font-weight: bold; }
+label { margin-left: auto; }
+select { font: inherit; }
+main { padding-top: 16px; }

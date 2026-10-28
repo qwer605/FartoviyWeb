@@ -1,0 +1,23 @@
+@if (product(); as product) {
+  <a routerLink="/catalog">{{ 'Назад в каталог' | t }}</a>
+  <article>
+    <img [src]="product.image" [alt]="product.name | t" width="480" height="400">
+    <section>
+      <h1>{{ product.name | t }}</h1>
+      <p>{{ product.description | t }}</p>
+      <p><strong>{{ store.money(product.price) }}</strong></p>
+      <label for="product-size">{{ 'Размер' | t }}</label>
+      <select id="product-size" [value]="size()" (change)="selectSize($event)">
+        @for (value of product.sizes; track value) {
+          <option [value]="value">{{ value | t }}</option>
+        }
+      </select>
+      <button type="button" (click)="add()">{{ 'Добавить в корзину' | t }}</button>
+      <p class="message" role="status">{{ message() | t }}</p>
+      <a routerLink="/cart">{{ 'Перейти в корзину' | t }}</a>
+    </section>
+  </article>
+} @else {
+  <h1>{{ 'Товар не найден' | t }}</h1>
+  <a routerLink="/catalog">{{ 'Назад в каталог' | t }}</a>
+}

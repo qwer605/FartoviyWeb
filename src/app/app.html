@@ -1,0 +1,15 @@
+<header>
+  <span>FARTOVIY</span>
+  <nav [attr.aria-label]="'Навигация' | t">
+    <a routerLink="/catalog" routerLinkActive="active">{{ 'Каталог' | t }}</a>
+    <a routerLink="/cart" routerLinkActive="active">{{ 'Корзина' | t }} ({{ store.count() }})</a>
+  </nav>
+  <label>
+    {{ 'Язык' | t }}
+    <select [value]="i18n.language()" (change)="i18n.setLanguage($event)" [attr.aria-label]="'Язык' | t">
+      <option value="ru">RU</option>
+      <option value="uk">УКР</option>
+    </select>
+  </label>
+</header>
+<main><router-outlet /></main>

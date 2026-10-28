@@ -1,4 +1,5 @@
 /dist/
-/outputs/
 /node_modules/
+/.angular/
+/out-tsc/
 *.log

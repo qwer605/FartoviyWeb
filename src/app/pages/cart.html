@@ -1,0 +1,31 @@
+<h1>{{ 'Корзина' | t }}</h1>
+@if (store.cart().length) {
+  <ul>
+    @for (item of store.cart(); track item.id + ':' + item.size) {
+      @if (store.product(item.id); as product) {
+        <li>
+          <a [routerLink]="['/product', product.id]">
+            <img [src]="product.image" [alt]="product.name | t" width="96" height="96">
+          </a>
+          <div class="item">
+            <h2><a [routerLink]="['/product', product.id]">{{ product.name | t }}</a></h2>
+            <p>{{ 'Размер' | t }}: {{ item.size | t }}</p>
+            <div class="quantity">
+              <button type="button" (click)="store.changeQuantity(item, -1)" [attr.aria-label]="('Уменьшить количество' | t) + ': ' + (product.name | t)">−</button>
+              <output [attr.aria-label]="'Количество' | t">{{ item.qty }}</output>
+              <button type="button" (click)="store.changeQuantity(item, 1)" [disabled]="item.qty >= 99" [attr.aria-label]="('Увеличить количество' | t) + ': ' + (product.name | t)">+</button>
+            </div>
+          </div>
+          <div class="item-total">
+            <p><strong>{{ store.money(product.price * item.qty) }}</strong></p>
+            <button type="button" (click)="store.remove(item)" [attr.aria-label]="('Удалить' | t) + ': ' + (product.name | t)">{{ 'Удалить' | t }}</button>
+          </div>
+        </li>
+      }
+    }
+  </ul>
+  <p class="total"><strong>{{ 'Итого' | t }}: {{ store.money(store.total()) }}</strong></p>
+} @else {
+  <p>{{ 'Корзина пуста.' | t }}</p>
+}
+<a routerLink="/catalog">{{ 'Продолжить покупки' | t }}</a>

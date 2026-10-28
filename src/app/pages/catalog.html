@@ -1,9 +1,16 @@
 <h1>{{ 'Каталог' | t }}</h1>
-<p>{{ 'Товаров:' | t }} {{ store.products.length }}</p>
-<section class="products" [attr.aria-label]="'Список товаров' | t">
-  @for (product of store.products; track product.id) {
-    <shop-product-card [product]="product" />
-  } @empty {
-    <p>{{ 'В каталоге пока нет товаров.' | t }}</p>
-  }
-</section>
+@if (store.loading()) {
+  <p role="status">{{ 'Загрузка товаров…' | t }}</p>
+} @else if (store.loadError()) {
+  <p role="alert">{{ 'Не удалось открыть локальный каталог. Повторите попытку.' | t }}</p>
+  <button type="button" (click)="store.loadProducts()">{{ 'Повторить' | t }}</button>
+} @else {
+  <p>{{ 'Товаров:' | t }} {{ store.products().length }}</p>
+  <section class="products" [attr.aria-label]="'Список товаров' | t">
+    @for (product of store.products(); track product.id) {
+      <shop-product-card [product]="product" />
+    } @empty {
+      <p>{{ 'В каталоге пока нет товаров.' | t }}</p>
+    }
+  </section>
+}

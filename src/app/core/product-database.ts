@@ -50,34 +50,6 @@ export class ProductDatabase {
     await this.request('readwrite', store => store.put(product));
   }
 
-  async create(product: Product): Promise<void> {
-    validateProduct(product);
-    await this.request('readwrite', store => store.add(product));
-  }
-
-  async update(product: Product): Promise<void> {
-    validateProduct(product);
-    const database = await this.open();
-    await new Promise<void>((resolve, reject) => {
-      const transaction = database.transaction(STORE, 'readwrite');
-      const store = transaction.objectStore(STORE);
-      let missing = false;
-      let failure: unknown;
-      transaction.oncomplete = () => resolve();
-      transaction.onabort = () => reject(missing
-        ? new DOMException('Product no longer exists', 'NotFoundError')
-        : failure ?? transaction.error ?? new Error('Cannot update product'));
-      const request = store.get(product.id);
-      request.onsuccess = () => {
-        if (!request.result) { missing = true; transaction.abort(); }
-        else {
-          try { store.put(product); }
-          catch (error) { failure = error; transaction.abort(); }
-        }
-      };
-    });
-  }
-
   async remove(id: string): Promise<void> {
     await this.request('readwrite', store => store.delete(id));
   }
@@ -170,7 +142,7 @@ export class ProductDatabase {
       request.onsuccess = () => { result = request.result; };
       // A request succeeding does not guarantee that its transaction was committed.
       transaction.oncomplete = () => resolve(result);
-      transaction.onabort = () => reject(transaction.error ?? new Error('Product transaction failed'));
+      transaction.onabort = transaction.onerror = () => reject(transaction.error ?? new Error('Product transaction failed'));
     });
   }
 }

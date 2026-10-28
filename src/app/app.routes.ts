@@ -12,6 +12,5 @@ export const routes: Routes = [
   { path: 'orders', loadComponent: () => import('./pages/orders').then(module => module.OrdersPage) },
   { path: 'orders/:id', loadComponent: () => import('./pages/order').then(module => module.OrderPage) },
   { path: 'recognize', loadComponent: () => import('./pages/recognize').then(module => module.RecognizePage) },
-  { path: 'admin', loadComponent: () => import('./pages/admin').then(module => module.AdminPage) },
   { path: '**', redirectTo: 'catalog' }
 ];

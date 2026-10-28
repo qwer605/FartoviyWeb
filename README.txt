@@ -51,7 +51,7 @@ CI/CD FE в GitHub Actions и GitHub Pages
 
 Предыдущая публикация FE в Sites
   Публичный адрес: https://fartoviy.nimblejam34.chatgpt.site
-  Доступ по ссылке без авторизации; этот адрес можно использовать для QR-кода.
+  Предыдущий адрес сохранён для справки; актуальный QR-код ведёт в GitHub Pages.
   Привязка Site сохранена в .openai/hosting.json.
   Разработку FE и BE можно продолжать в текущем рабочем проекте.
   Pipeline публикует только в GitHub Pages; Sites обновляется отдельно через ChatGPT.
@@ -59,11 +59,12 @@ CI/CD FE в GitHub Actions и GitHub Pages
 QR-код
   share/qr.png — для отправки и печати.
   share/qr.svg — векторная версия.
-  share/url.txt — адрес предыдущей публикации в Sites; QR-коды также ведут в Sites.
+  share/url.txt — https://qwer605.github.io/FartoviyWeb/.
+  PNG и SVG содержат этот же адрес GitHub Pages.
 
 Служебные каталоги
   node_modules/ — установленные зависимости.
   .angular/ — автоматически создаваемый кеш Angular.
 
-Для открытия сайта через QR используйте публичный адрес Sites выше.
+Для открытия сайта через QR используйте https://qwer605.github.io/FartoviyWeb/.
 Фотографии: Unsplash.

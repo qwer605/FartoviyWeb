@@ -1,0 +1,54 @@
+<h1>{{ 'Что на фото?' | t }}</h1>
+<p>{{ 'Выберите фото или сделайте снимок. Изображения обрабатываются на вашем устройстве.' | t }}</p>
+<p class="hint">{{ 'Пока распознаются обычные объекты, включая людей, рюкзаки и сумки. Это не поиск конкретных товаров каталога.' | t }}</p>
+
+<div class="actions">
+  <label class="file-button">
+    {{ 'Выбрать фото' | t }}
+    <input type="file" accept="image/jpeg,image/png,image/webp" [disabled]="busy() || cameraStarting()" (change)="selectFile($event)">
+  </label>
+  <button type="button" (click)="startCamera()" [disabled]="busy() || cameraStarting() || cameraOpen()">{{ 'Открыть камеру' | t }}</button>
+  <button type="button" (click)="example()" [disabled]="busy() || cameraStarting()">{{ 'Попробовать пример' | t }}</button>
+</div>
+<p class="hint">{{ 'JPG, PNG или WebP, до 20 МБ. Первый запуск может занять немного времени.' | t }}</p>
+
+<video #camera [hidden]="!cameraOpen()" autoplay muted playsinline [attr.aria-label]="'Камера' | t"></video>
+@if (cameraOpen()) {
+  <div class="actions">
+    <button type="button" (click)="capture()">{{ 'Сделать снимок' | t }}</button>
+    <button type="button" (click)="stopCamera()">{{ 'Закрыть камеру' | t }}</button>
+  </div>
+}
+
+@if (preview()) {
+  <div class="preview" [attr.aria-busy]="busy()">
+    <img [src]="preview()" [alt]="'Выбранное фото' | t">
+    @for (box of detections(); track $index) {
+      <div class="box" aria-hidden="true" [style.left.%]="box.x * 100" [style.top.%]="box.y * 100"
+        [style.width.%]="box.width * 100" [style.height.%]="box.height * 100">
+        <span>{{ label(box.classId) }} {{ confidence(box.confidence) }}</span>
+      </div>
+    }
+  </div>
+  <button class="analyze" type="button" (click)="analyze()" [disabled]="busy() || cameraOpen() || cameraStarting()">{{ 'Распознать' | t }}</button>
+}
+
+<p role="status" aria-live="polite">
+  @if (busy()) {
+    {{ (phase() === 'loading' ? 'Подготовка распознавания…' : 'Распознавание…') | t }}
+  } @else if (completed()) {
+    {{ 'Найдено объектов:' | t }} {{ detections().length }}
+  }
+</p>
+@if (error()) { <p class="error" role="alert">{{ error() | t }}</p> }
+@if (completed()) {
+  @if (detections().length) {
+    <ul [attr.aria-label]="'Найденные объекты' | t">
+      @for (box of detections(); track $index) {
+        <li>{{ label(box.classId) }} — {{ confidence(box.confidence) }}</li>
+      }
+    </ul>
+  } @else {
+    <p>{{ 'Объекты не найдены. Попробуйте другое фото или снимок с лучшим освещением.' | t }}</p>
+  }
+}

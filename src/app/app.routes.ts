@@ -8,5 +8,6 @@ export const routes: Routes = [
   { path: 'catalog', component: CatalogPage },
   { path: 'product/:id', component: ProductPage },
   { path: 'cart', component: CartPage },
+  { path: 'recognize', loadComponent: () => import('./pages/recognize').then(module => module.RecognizePage) },
   { path: '**', redirectTo: 'catalog' }
 ];

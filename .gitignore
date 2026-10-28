@@ -3,3 +3,5 @@
 /.angular/
 /out-tsc/
 *.log
+/test-results/
+/playwright-report/

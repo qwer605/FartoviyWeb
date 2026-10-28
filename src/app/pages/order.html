@@ -1,0 +1,37 @@
+@if (loading()) {
+  <p role="status">{{ 'Загрузка заказов…' | t }}</p>
+} @else if (error()) {
+  <p role="alert">{{ 'Не удалось загрузить заказы.' | t }}</p>
+  <button type="button" (click)="load()">{{ 'Повторить' | t }}</button>
+} @else if (order(); as order) {
+  <h1>{{ 'Заказ сохранён' | t }}</h1>
+  <p><strong>{{ order.number }}</strong> · <time [attr.datetime]="order.createdAt">{{ date(order.createdAt) }}</time></p>
+  <p class="notice">{{ 'Заказ хранится на этом устройстве. Продавцу он ещё не отправлен.' | t }}</p>
+  <section [attr.aria-label]="'Состав заказа' | t">
+    <h2>{{ 'Состав заказа' | t }}</h2>
+    <ul>
+      @for (item of order.items; track item.id + ':' + item.size) {
+        <li><strong>{{ item.name | t }}</strong><br>
+          {{ 'Размер' | t }}: {{ item.size | t }} · {{ 'Количество' | t }}: {{ item.qty }}<br>
+          {{ store.money(item.unitPrice) }} × {{ item.qty }} = {{ store.money(item.total) }}
+        </li>
+      }
+    </ul>
+    <p class="total"><strong>{{ 'Итого' | t }}: {{ store.money(order.total) }}</strong></p>
+  </section>
+  <section [attr.aria-label]="'Контактные данные' | t">
+    <h2>{{ 'Контактные данные' | t }}</h2>
+    <dl>
+      <dt>{{ 'Имя' | t }}</dt><dd>{{ order.customer.name }}</dd>
+      <dt>Email</dt><dd>{{ order.customer.email }}</dd>
+      @if (order.customer.phone) { <dt>{{ 'Телефон' | t }}</dt><dd>{{ order.customer.phone }}</dd> }
+      @if (order.customer.note) { <dt>{{ 'Комментарий' | t }}</dt><dd class="note">{{ order.customer.note }}</dd> }
+    </dl>
+  </section>
+  <button class="primary" type="button" (click)="copy()">{{ 'Скопировать заказ' | t }}</button>
+  <p role="status">{{ copyStatus() | t }}</p>
+} @else { <h1>{{ 'Заказ не найден' | t }}</h1> }
+<div class="links">
+  <a routerLink="/orders">{{ 'Мои заказы' | t }}</a>
+  <a routerLink="/catalog">{{ 'Продолжить покупки' | t }}</a>
+</div>

@@ -43,11 +43,11 @@ test('translates complete messages before shorter words', () => {
 
 test('English covers all current product text, sizes, UI labels and messages', () => {
   const values = products.flatMap(product => [product.name, product.label, product.description, ...product.sizes]);
-  for (const file of ['app.html', 'pages/catalog.html', 'pages/cart.html', 'pages/product.html', 'pages/recognize.html', 'shared/product-card.html']) {
+  for (const file of ['app.html', 'pages/catalog.html', 'pages/cart.html', 'pages/product.html', 'pages/recognize.html', 'pages/checkout.html', 'pages/orders.html', 'pages/order.html', 'shared/product-card.html']) {
     const template = readFileSync(new URL('../src/app/' + file, import.meta.url), 'utf8');
     for (const match of template.matchAll(/'([^']+)'\s*\|\s*t\b/g)) values.push(match[1]);
   }
-  for (const file of ['product.ts', 'recognize.ts']) {
+  for (const file of ['product.ts', 'recognize.ts', 'checkout.ts', 'order.ts']) {
     const source = readFileSync(new URL('../src/app/pages/' + file, import.meta.url), 'utf8');
     for (const match of source.matchAll(/'([^']*[А-Яа-яЁё][^']*)'/g)) values.push(match[1]);
   }

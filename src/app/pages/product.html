@@ -17,7 +17,7 @@
           <option [value]="value">{{ value | t }}</option>
         }
       </select>
-      <button type="button" (click)="add()">{{ 'Добавить в корзину' | t }}</button>
+      <button type="button" (click)="add()" [disabled]="store.submittingOrder()">{{ 'Добавить в корзину' | t }}</button>
       <p class="message" role="status">{{ message() | t }}</p>
       <a routerLink="/cart">{{ 'Перейти в корзину' | t }}</a>
     </section>

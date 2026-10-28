@@ -43,7 +43,7 @@ jobs:
       - name: Install test browser
         run: npx playwright install --with-deps chromium
 
-      - name: Test catalog persistence and browser recognition
+      - name: Test orders, catalog persistence and browser recognition
         run: npm run test:e2e
 
       - name: Save failed browser test screenshots

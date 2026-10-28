@@ -1,0 +1,19 @@
+:host { display: block; }
+h1 { margin: 0 0 12px; font-size: 26px; }
+h2 { margin-top: 0; font-size: 20px; }
+.notice { padding: 12px 16px; background: #f0f5fb; border-left: 3px solid #174c85; }
+.checkout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; margin-top: 24px; }
+fieldset { border: 1px solid #cbd2da; border-radius: 6px; padding: 20px; margin: 0; min-width: 0; }
+legend { padding: 0 6px; font-weight: bold; }
+label { display: block; margin: 12px 0 4px; }
+input, textarea { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #929ca8; border-radius: 4px; font: inherit; }
+input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 3px solid #174c85; outline-offset: 2px; }
+button { font: inherit; padding: 10px 16px; cursor: pointer; }
+.primary { margin-top: 20px; background: #174c85; color: white; border: 0; border-radius: 4px; }
+fieldset:disabled { opacity: .6; }
+ul { padding-left: 20px; }
+li { padding: 8px 0; border-bottom: 1px solid #ddd; overflow-wrap: anywhere; }
+.total { margin: 20px 0; font-size: 20px; }
+a { color: #174c85; }
+.error { color: #a01a1a; }
+@media (max-width: 650px) { .checkout { grid-template-columns: minmax(0, 1fr); } }

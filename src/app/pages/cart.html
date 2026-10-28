@@ -16,20 +16,21 @@
             <h2><a [routerLink]="['/product', product.id]">{{ product.name | t }}</a></h2>
             <p>{{ 'Размер' | t }}: {{ item.size | t }}</p>
             <div class="quantity">
-              <button type="button" (click)="store.changeQuantity(item, -1)" [attr.aria-label]="('Уменьшить количество' | t) + ': ' + (product.name | t)">−</button>
+              <button type="button" (click)="store.changeQuantity(item, -1)" [disabled]="store.submittingOrder()" [attr.aria-label]="('Уменьшить количество' | t) + ': ' + (product.name | t)">−</button>
               <output [attr.aria-label]="'Количество' | t">{{ item.qty }}</output>
-              <button type="button" (click)="store.changeQuantity(item, 1)" [disabled]="item.qty >= 99" [attr.aria-label]="('Увеличить количество' | t) + ': ' + (product.name | t)">+</button>
+              <button type="button" (click)="store.changeQuantity(item, 1)" [disabled]="item.qty >= 99 || store.submittingOrder()" [attr.aria-label]="('Увеличить количество' | t) + ': ' + (product.name | t)">+</button>
             </div>
           </div>
           <div class="item-total">
             <p><strong>{{ store.money(product.price * item.qty) }}</strong></p>
-            <button type="button" (click)="store.remove(item)" [attr.aria-label]="('Удалить' | t) + ': ' + (product.name | t)">{{ 'Удалить' | t }}</button>
+            <button type="button" (click)="store.remove(item)" [disabled]="store.submittingOrder()" [attr.aria-label]="('Удалить' | t) + ': ' + (product.name | t)">{{ 'Удалить' | t }}</button>
           </div>
         </li>
       }
     }
   </ul>
   <p class="total"><strong>{{ 'Итого' | t }}: {{ store.money(store.total()) }}</strong></p>
+  <p><a class="checkout-link" routerLink="/checkout">{{ 'Оформить заказ' | t }}</a></p>
 } @else {
   <p>{{ 'Корзина пуста.' | t }}</p>
 }

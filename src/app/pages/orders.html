@@ -1,0 +1,20 @@
+<h1>{{ 'Мои заказы' | t }}</h1>
+<p>{{ 'Здесь показаны заказы, сохранённые в этом браузере.' | t }}</p>
+@if (loading()) {
+  <p role="status">{{ 'Загрузка заказов…' | t }}</p>
+} @else if (error()) {
+  <p role="alert">{{ 'Не удалось загрузить заказы.' | t }}</p>
+  <button type="button" (click)="load()">{{ 'Повторить' | t }}</button>
+} @else {
+  <ul>
+    @for (order of orders(); track order.id) {
+      <li>
+        <a [routerLink]="['/orders', order.id]">{{ order.number }}</a>
+        <time [attr.datetime]="order.createdAt">{{ date(order.createdAt) }}</time>
+        <span>{{ 'Сохранён на этом устройстве' | t }}</span>
+        <strong>{{ store.money(order.total) }}</strong>
+      </li>
+    } @empty { <li>{{ 'Сохранённых заказов пока нет.' | t }}</li> }
+  </ul>
+}
+<a routerLink="/catalog">{{ 'Продолжить покупки' | t }}</a>

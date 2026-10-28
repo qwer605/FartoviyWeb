@@ -34,11 +34,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Test language selection and translations
+      - name: Test application logic
         run: npm test
 
       - name: Build FE
         run: npm run build -- --base-href "/${GITHUB_REPOSITORY#*/}/"
+
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Test browser recognition
+        run: npm run test:e2e
+
+      - name: Save failed browser test screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

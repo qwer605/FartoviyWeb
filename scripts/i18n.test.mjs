@@ -43,12 +43,14 @@ test('translates complete messages before shorter words', () => {
 
 test('English covers all current product text, sizes, UI labels and messages', () => {
   const values = products.flatMap(product => [product.name, product.label, product.description, ...product.sizes]);
-  for (const file of ['app.html', 'pages/catalog.html', 'pages/cart.html', 'pages/product.html', 'shared/product-card.html']) {
+  for (const file of ['app.html', 'pages/catalog.html', 'pages/cart.html', 'pages/product.html', 'pages/recognize.html', 'shared/product-card.html']) {
     const template = readFileSync(new URL('../src/app/' + file, import.meta.url), 'utf8');
     for (const match of template.matchAll(/'([^']+)'\s*\|\s*t\b/g)) values.push(match[1]);
   }
-  const productPage = readFileSync(new URL('../src/app/pages/product.ts', import.meta.url), 'utf8');
-  for (const match of productPage.matchAll(/'([^']*[А-Яа-яЁё][^']*)'/g)) values.push(match[1]);
+  for (const file of ['product.ts', 'recognize.ts']) {
+    const source = readFileSync(new URL('../src/app/pages/' + file, import.meta.url), 'utf8');
+    for (const match of source.matchAll(/'([^']*[А-Яа-яЁё][^']*)'/g)) values.push(match[1]);
+  }
   for (const value of values) {
     assert.doesNotMatch(translateText(value, 'en'), /[А-Яа-яЁё]/, 'Missing English translation: ' + value);
   }

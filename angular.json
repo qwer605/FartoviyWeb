@@ -19,9 +19,15 @@
             },
             "index": "src/index.html",
             "browser": "src/main.ts",
+            "webWorkerTsConfig": "tsconfig.worker.json",
             "tsConfig": "tsconfig.app.json",
             "baseHref": "./",
             "assets": [
+              {
+                "glob": "ort-wasm-simd-threaded.{mjs,wasm}",
+                "input": "node_modules/onnxruntime-web/dist",
+                "output": "onnx"
+              },
               {
                 "glob": "**/*",
                 "input": "public"

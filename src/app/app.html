@@ -3,6 +3,7 @@
   <nav [attr.aria-label]="'Навигация' | t">
     <a routerLink="/catalog" routerLinkActive="active">{{ 'Каталог' | t }}</a>
     <a routerLink="/cart" routerLinkActive="active">{{ 'Корзина' | t }} ({{ store.count() }})</a>
+    <a routerLink="/recognize" routerLinkActive="active">{{ 'Распознавание' | t }}</a>
   </nav>
   <label>
     {{ 'Язык' | t }}

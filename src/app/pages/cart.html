@@ -1,5 +1,10 @@
 <h1>{{ 'Корзина' | t }}</h1>
-@if (store.cart().length) {
+@if (store.loading()) {
+  <p role="status">{{ 'Загрузка товаров…' | t }}</p>
+} @else if (store.loadError()) {
+  <p role="alert">{{ 'Не удалось открыть локальный каталог. Повторите попытку.' | t }}</p>
+  <button type="button" (click)="store.loadProducts()">{{ 'Повторить' | t }}</button>
+} @else if (store.cart().length) {
   <ul>
     @for (item of store.cart(); track item.id + ':' + item.size) {
       @if (store.product(item.id); as product) {

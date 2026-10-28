@@ -1,4 +1,9 @@
-@if (product(); as product) {
+@if (store.loading()) {
+  <p role="status">{{ 'Загрузка товаров…' | t }}</p>
+} @else if (store.loadError()) {
+  <p role="alert">{{ 'Не удалось открыть локальный каталог. Повторите попытку.' | t }}</p>
+  <button type="button" (click)="store.loadProducts()">{{ 'Повторить' | t }}</button>
+} @else if (product(); as product) {
   <a routerLink="/catalog">{{ 'Назад в каталог' | t }}</a>
   <article>
     <img [src]="product.image" [alt]="product.name | t" width="480" height="400">

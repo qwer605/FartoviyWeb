@@ -1,0 +1,45 @@
+<h1>{{ 'Оформление заказа' | t }}</h1>
+<p class="notice">{{ 'Заказ сохранится только на этом устройстве. Для передачи продавцу его нужно будет скопировать и отправить самостоятельно.' | t }}</p>
+@if (store.loading()) {
+  <p role="status">{{ 'Загрузка товаров…' | t }}</p>
+} @else if (store.loadError()) {
+  <p role="alert">{{ 'Не удалось открыть локальный каталог. Повторите попытку.' | t }}</p>
+  <button type="button" (click)="store.loadProducts()">{{ 'Повторить' | t }}</button>
+} @else if (!store.cart().length) {
+  <p>{{ 'Корзина пуста.' | t }}</p>
+  <a routerLink="/catalog">{{ 'Продолжить покупки' | t }}</a>
+} @else {
+  <div class="checkout">
+    <section class="summary" [attr.aria-label]="'Состав заказа' | t">
+      <h2>{{ 'Состав заказа' | t }}</h2>
+      <ul>
+        @for (item of store.cart(); track item.id + ':' + item.size) {
+          @if (store.product(item.id); as product) {
+            <li><strong>{{ product.name | t }}</strong><br>
+              {{ 'Размер' | t }}: {{ item.size | t }} · {{ 'Количество' | t }}: {{ item.qty }}<br>
+              {{ store.money(product.price) }} × {{ item.qty }} = {{ store.money(product.price * item.qty) }}
+            </li>
+          }
+        }
+      </ul>
+      <p class="total"><strong>{{ 'Итого' | t }}: {{ store.money(store.total()) }}</strong></p>
+      <a routerLink="/cart">{{ 'Изменить корзину' | t }}</a>
+    </section>
+    <form (submit)="submit($event)">
+      <fieldset [disabled]="store.submittingOrder()">
+        <legend>{{ 'Контактные данные' | t }}</legend>
+        <label for="customer-name">{{ 'Имя' | t }}</label>
+        <input id="customer-name" name="name" [value]="customer().name" autocomplete="name" required maxlength="120">
+        <label for="customer-email">Email</label>
+        <input id="customer-email" name="email" [value]="customer().email" type="email" autocomplete="email" required maxlength="254">
+        <label for="customer-phone">{{ 'Телефон (необязательно)' | t }}</label>
+        <input id="customer-phone" name="phone" [value]="customer().phone" type="tel" autocomplete="tel" maxlength="40">
+        <label for="customer-note">{{ 'Комментарий (необязательно)' | t }}</label>
+        <textarea id="customer-note" name="note" [value]="customer().note" rows="4" maxlength="1000"></textarea>
+        <button class="primary" type="submit">{{ 'Сохранить заказ' | t }}</button>
+      </fieldset>
+      @if (store.submittingOrder()) { <p role="status">{{ 'Сохранение заказа…' | t }}</p> }
+    </form>
+  </div>
+}
+@if (error()) { <p class="error" role="alert">{{ error() | t }}</p> }

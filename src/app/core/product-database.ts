@@ -1,7 +1,9 @@
 import type { Product } from './catalog';
+import { buildOrder, validateOrderDraft } from './order';
+import type { Order, OrderDraft } from './order';
 
 export const PRODUCT_DATABASE_NAME = 'fartoviy-products';
-const VERSION = 1;
+const VERSION = 2;
 const STORE = 'products';
 
 export function validateProduct(value: unknown): asserts value is Product {
@@ -52,6 +54,45 @@ export class ProductDatabase {
     await this.request('readwrite', store => store.delete(id));
   }
 
+  async listOrders(): Promise<Order[]> {
+    const orders = await this.request<Order[]>('readonly', store => store.getAll(), 'orders');
+    return orders.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  getOrder(id: string): Promise<Order | undefined> {
+    return this.request('readonly', store => store.get(id), 'orders');
+  }
+
+  async createOrder(draft: OrderDraft): Promise<Order> {
+    const checked = validateOrderDraft(draft);
+    const database = await this.open();
+    return new Promise((resolve, reject) => {
+      const transaction = database.transaction([STORE, 'orders'], 'readwrite');
+      const orders = transaction.objectStore('orders');
+      let result: Order;
+      let failure: unknown;
+      const abort = (error: unknown) => { failure = error; transaction.abort(); };
+      transaction.onabort = transaction.onerror = () => reject(failure ?? transaction.error ?? new Error('Cannot save order'));
+      transaction.oncomplete = () => resolve(result);
+      const existing = orders.get(checked.id);
+      existing.onsuccess = () => {
+        // The same checkout token can only create one order, even across tabs/retries.
+        if (existing.result) { result = existing.result; return; }
+        const products: Product[] = [];
+        let remaining = checked.items.length;
+        for (const item of checked.items) {
+          const request = transaction.objectStore(STORE).get(item.id);
+          request.onsuccess = () => {
+            try {
+              if (request.result !== undefined) { validateProduct(request.result); products.push(request.result); }
+              if (--remaining === 0) { result = buildOrder(checked, products); orders.add(result); }
+            } catch (error) { abort(error); }
+          };
+        }
+      };
+    });
+  }
+
   close(): void {
     const connection = this.connection;
     this.connection = undefined;
@@ -65,11 +106,17 @@ export class ProductDatabase {
       let settled = false;
       const fail = (error: unknown) => { if (!settled) { settled = true; reject(error); } };
       const request = this.factory.open(this.name, VERSION);
-      request.onupgradeneeded = () => {
+      request.onupgradeneeded = event => {
         try {
-          const store = request.result.createObjectStore(STORE, { keyPath: 'id' });
-          store.createIndex('category', 'category', { unique: false });
-          for (const product of this.seed) { validateProduct(product); store.add(product); }
+          if (event.oldVersion < 1) {
+            const store = request.result.createObjectStore(STORE, { keyPath: 'id' });
+            store.createIndex('category', 'category', { unique: false });
+            for (const product of this.seed) { validateProduct(product); store.add(product); }
+          }
+          if (event.oldVersion < 2) {
+            const orders = request.result.createObjectStore('orders', { keyPath: 'id' });
+            orders.createIndex('createdAt', 'createdAt', { unique: false });
+          }
         } catch (error) { request.transaction?.abort(); fail(error); }
       };
       request.onerror = () => fail(request.error ?? new Error('Cannot open product database'));
@@ -86,11 +133,11 @@ export class ProductDatabase {
     return this.connection;
   }
 
-  private async request<T>(mode: IDBTransactionMode, operation: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+  private async request<T>(mode: IDBTransactionMode, operation: (store: IDBObjectStore) => IDBRequest<T>, storeName = STORE): Promise<T> {
     const database = await this.open();
     return new Promise<T>((resolve, reject) => {
-      const transaction = database.transaction(STORE, mode);
-      const request = operation(transaction.objectStore(STORE));
+      const transaction = database.transaction(storeName, mode);
+      const request = operation(transaction.objectStore(storeName));
       let result: T;
       request.onsuccess = () => { result = request.result; };
       // A request succeeding does not guarantee that its transaction was committed.

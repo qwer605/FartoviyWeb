@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 async function changeCatalog(page, operation) {
   await page.evaluate(async operation => {
     await new Promise((resolve, reject) => {
-      const request = indexedDB.open('fartoviy-products', 1);
+      const request = indexedDB.open('fartoviy-products');
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         const database = request.result;

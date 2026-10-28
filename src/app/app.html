@@ -7,6 +7,7 @@
   <label>
     {{ 'Язык' | t }}
     <select [value]="i18n.language()" (change)="i18n.setLanguage($event)" [attr.aria-label]="'Язык' | t">
+      <option value="en">EN</option>
       <option value="ru">RU</option>
       <option value="uk">УКР</option>
     </select>

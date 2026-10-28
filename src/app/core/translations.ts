@@ -1,4 +1,58 @@
-export const ukrainian: Record<string, string> = {
+import type { Language } from './language';
+
+export const english = {
+  "FARTOVIY — каталог": "FARTOVIY — Catalog",
+  "Демо: каталог товаров, информация о товаре и корзина.": "Demo: product catalog, product details and shopping cart.",
+  "Навигация": "Navigation",
+  "Каталог": "Catalog",
+  "Корзина": "Cart",
+  "Язык": "Language",
+  "Товаров:": "Products:",
+  "Список товаров": "Product list",
+  "В каталоге пока нет товаров.": "There are no products in the catalog yet.",
+  "Подробнее": "View details",
+  "Назад в каталог": "Back to catalog",
+  "Размер": "Size",
+  "Единый": "One size",
+  "Добавить в корзину": "Add to cart",
+  "Товар добавлен в корзину.": "Product added to cart.",
+  "В корзине уже 99 товаров этого размера.": "Your cart already contains 99 items in this size.",
+  "Перейти в корзину": "Go to cart",
+  "Товар не найден": "Product not found",
+  "Уменьшить количество": "Decrease quantity",
+  "Увеличить количество": "Increase quantity",
+  "Количество": "Quantity",
+  "Удалить": "Remove",
+  "Итого": "Total",
+  "Корзина пуста.": "Your cart is empty.",
+  "Продолжить покупки": "Continue shopping",
+  "Кроссовки": "Sneakers",
+  "Футболка": "T-shirt",
+  "Футболки": "T-shirts",
+  "Рюкзак": "Backpack",
+  "Рюкзаки": "Backpacks",
+  "Худи и свитшоты": "Hoodies and sweatshirts",
+  "Худи": "Hoodie",
+  "Солнцезащитные очки": "Sunglasses",
+  "Очки": "Sunglasses",
+  "Куртка": "Jacket",
+  "Верхняя одежда": "Outerwear",
+  "Сумка": "Bag",
+  "Сумки": "Bags",
+  "у.е.": "units",
+  "Яркий акцент для повседневных маршрутов. Лёгкий верх, мягкая стелька и гибкая подошва — для долгих прогулок и больших планов.": "A bright accent for everyday adventures. A lightweight upper, soft insole and flexible sole for long walks and big plans.",
+  "Та самая белая футболка, с которой начинается гардероб. Мягкий хлопок, свободная посадка и минимум деталей. Легко сочетается со всем, что вам нравится.": "The classic white T-shirt every wardrobe starts with. Soft cotton, a relaxed fit and minimal details. Easy to pair with everything you love.",
+  "Всё нужное — с собой. Вместительное основное отделение, удобные лямки и лаконичный дизайн для города, работы и спонтанных поездок.": "Keep all your essentials with you. A spacious main compartment, comfortable straps and a simple design for the city, work and spontaneous trips.",
+  "Ваш личный режим комфорта. Объёмный крой, уютный капюшон и мягкая ткань. Для прохладных вечеров и дней, когда хочется просто быть собой.": "Your own comfort zone. A roomy fit, cozy hood and soft fabric. For cool evenings and days when you just want to be yourself.",
+  "Немного солнца в повседневных образах. Выразительная оправа в тёплом оттенке и удобная посадка — для прогулок без спешки.": "A little sunshine for your everyday look. A distinctive frame in a warm shade and a comfortable fit for leisurely walks.",
+  "Ещё один любимый слой. Универсальная куртка свободного силуэта для переменчивой погоды и многослойных сочетаний.": "Your next favorite layer. A versatile, relaxed-fit jacket for changeable weather and layered outfits.",
+  "Классическая форма и спокойные оттенки. Удобная пара на каждый день, которая одинаково хорошо смотрится с джинсами и свободными брюками.": "A classic shape and subtle colors. A comfortable everyday pair that looks equally good with jeans and relaxed trousers.",
+  "Маленькая сумка для важных мелочей. Компактная форма, аккуратная фурнитура и характер, который завершает образ.": "A small bag for your everyday essentials. A compact shape, neat hardware and a touch of character to complete your look."
+};
+
+export const ukrainian: Record<keyof typeof english, string> = {
+  "FARTOVIY — каталог": "FARTOVIY — каталог",
+  "Демо: каталог товаров, информация о товаре и корзина.": "Демо: каталог товарів, інформація про товар і кошик.",
   "Навигация": "Навігація",
   "Каталог": "Каталог",
   "Корзина": "Кошик",
@@ -23,8 +77,19 @@ export const ukrainian: Record<string, string> = {
   "Корзина пуста.": "Кошик порожній.",
   "Продолжить покупки": "Продовжити покупки",
   "Кроссовки": "Кросівки",
+  "Футболка": "Футболка",
+  "Футболки": "Футболки",
+  "Рюкзак": "Рюкзак",
+  "Рюкзаки": "Рюкзаки",
+  "Худи и свитшоты": "Худі та світшоти",
   "Худи": "Худі",
+  "Солнцезащитные очки": "Сонцезахисні окуляри",
   "Очки": "Окуляри",
+  "Куртка": "Куртка",
+  "Верхняя одежда": "Верхній одяг",
+  "Сумка": "Сумка",
+  "Сумки": "Сумки",
+  "у.е.": "у.о.",
   "Яркий акцент для повседневных маршрутов. Лёгкий верх, мягкая стелька и гибкая подошва — для долгих прогулок и больших планов.": "Яскравий акцент для щоденних маршрутів. Легкий верх, м’яка устілка та гнучка підошва — для довгих прогулянок і великих планів.",
   "Та самая белая футболка, с которой начинается гардероб. Мягкий хлопок, свободная посадка и минимум деталей. Легко сочетается со всем, что вам нравится.": "Та сама біла футболка, з якої починається гардероб. М’яка бавовна, вільний крій і мінімум деталей. Легко поєднується з усім, що вам подобається.",
   "Всё нужное — с собой. Вместительное основное отделение, удобные лямки и лаконичный дизайн для города, работы и спонтанных поездок.": "Усе потрібне — із собою. Містке основне відділення, зручні лямки та лаконічний дизайн для міста, роботи й спонтанних подорожей.",
@@ -34,3 +99,12 @@ export const ukrainian: Record<string, string> = {
   "Классическая форма и спокойные оттенки. Удобная пара на каждый день, которая одинаково хорошо смотрится с джинсами и свободными брюками.": "Класична форма та спокійні відтінки. Зручна пара на щодень, яка однаково добре пасує до джинсів і вільних штанів.",
   "Маленькая сумка для важных мелочей. Компактная форма, аккуратная фурнитура и характер, который завершает образ.": "Маленька сумка для важливих дрібниць. Компактна форма, акуратна фурнітура й характер, який завершує образ."
 };
+
+const dictionaries: Record<'en' | 'uk', Record<string, string>> = { en: english, uk: ukrainian };
+const pattern = new RegExp(Object.keys(english).sort((a, b) => b.length - a.length)
+  .map(key => key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
+
+export function translateText(value: string, language: Language): string {
+  if (language === 'ru') return value;
+  return value.replace(pattern, match => dictionaries[language][match]);
+}

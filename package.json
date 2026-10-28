@@ -8,6 +8,7 @@
     "node": ">=22.18.0"
   },
   "scripts": {
+    "test": "node --test scripts/*.test.mjs",
     "start": "ng serve --host 127.0.0.1",
     "start:lan": "ng serve --host 0.0.0.0",
     "build": "ng build",

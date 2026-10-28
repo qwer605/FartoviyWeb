@@ -33,26 +33,33 @@ FARTOVIY — Angular-каталог
   Результат: dist/index.html и соседние файлы.
   При сборке dist/ пересоздаётся; редактировать нужно src/.
 
-Проверка FE в GitHub Actions
+CI/CD FE в GitHub Actions и GitHub Pages
   Workflow: .github/workflows/fe-ci.yml.
   Запускается при push в quality/main и при создании или обновлении PR в main.
   Устанавливает Node.js 22, выполняет npm ci и production-сборку npm run build.
-  Результат виден во вкладке Actions и в проверках PR: FE build / Production build.
-  Автопубликация в Sites этим workflow не выполняется.
+  Собирает приложение с base href /FartoviyWeb/ для адреса репозитория.
+  PR и push в quality только проверяют сборку.
+  Каждый push в main, включая merge PR quality -> main, публикует dist/ в Pages.
+  При ошибке сборки публикация не запускается.
+  Адрес FE: https://qwer605.github.io/FartoviyWeb/
+  Результат виден во вкладке Actions и в проверках PR: FE pipeline / Production build.
+  Первичная настройка: Settings -> Pages -> Build and deployment -> GitHub Actions.
+  Для ручного повторного запуска выберите main во вкладке Actions -> FE pipeline.
+  Workflow использует встроенный GITHUB_TOKEN; отдельные секреты не нужны.
   Для запрета merge при ошибке сборки добавьте Production build в required checks
   правила защиты ветки main в настройках GitHub.
 
-Публикация FE в Sites
+Предыдущая публикация FE в Sites
   Публичный адрес: https://fartoviy.nimblejam34.chatgpt.site
   Доступ по ссылке без авторизации; этот адрес можно использовать для QR-кода.
   Привязка Site сохранена в .openai/hosting.json.
   Разработку FE и BE можно продолжать в текущем рабочем проекте.
-  Обновления публикуйте в тот же Site, сохраняя project_id и адрес.
+  Pipeline публикует только в GitHub Pages; Sites обновляется отдельно через ChatGPT.
 
 QR-код
   share/qr.png — для отправки и печати.
   share/qr.svg — векторная версия.
-  share/url.txt — публичный адрес сайта.
+  share/url.txt — адрес предыдущей публикации в Sites; QR-коды также ведут в Sites.
 
 Служебные каталоги
   node_modules/ — установленные зависимости.

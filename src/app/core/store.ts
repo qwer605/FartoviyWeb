@@ -17,6 +17,7 @@ export class Store implements OnDestroy {
   readonly loadError = signal(false);
   readonly cart = signal<CartItem[]>([]);
   readonly submittingOrder = signal(false);
+  readonly savingCatalog = signal(false);
   private loadInProgress = false;
   private hasLoadedProducts = false;
   readonly count = computed(() => this.cart().reduce((total, item) => total + item.qty, 0));
@@ -52,13 +53,41 @@ export class Store implements OnDestroy {
     return this.products().find(product => product.id === id);
   }
 
+  async saveProduct(product: Product, create: boolean): Promise<void> {
+    await this.changeCatalog(async () => {
+      if (create) await this.database.create(product);
+      else await this.database.update(product);
+      this.applyCatalog([...this.products().filter(item => item.id !== product.id), product]);
+    });
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    await this.changeCatalog(async () => {
+      await this.database.remove(id);
+      this.applyCatalog(this.products().filter(product => product.id !== id));
+    });
+  }
+
+  private async changeCatalog(operation: () => Promise<void>): Promise<void> {
+    if (this.savingCatalog() || this.submittingOrder() || this.loading() || this.loadError()) throw new Error('Catalog is busy');
+    this.savingCatalog.set(true);
+    try { await operation(); } finally { this.savingCatalog.set(false); }
+  }
+
+  private applyCatalog(products: Product[]): void {
+    this.productList.set(products.sort((a, b) => a.id.localeCompare(b.id)));
+    this.cart.set(this.loadCart(this.cart()));
+    writeStorage('fartoviy-cart', this.cart());
+    writeStorage('fartoviy-checkout-attempt', null);
+  }
+
   money(amount: number): string {
     const language = this.i18n.language();
     return new Intl.NumberFormat(language).format(amount) + ' ' + this.i18n.text('у.е.');
   }
 
   add(product: Product, size: string): boolean {
-    if (this.submittingOrder() || this.loading() || this.loadError() || !this.product(product.id)?.sizes.includes(size)) return false;
+    if (this.savingCatalog() || this.submittingOrder() || this.loading() || this.loadError() || !this.product(product.id)?.sizes.includes(size)) return false;
     const existing = this.cart().find(item => item.id === product.id && item.size === size);
     if (existing && existing.qty >= 99) return false;
     writeStorage('fartoviy-checkout-attempt', null);
@@ -83,7 +112,7 @@ export class Store implements OnDestroy {
   }
 
   async placeOrder(customer: Customer): Promise<Order> {
-    if (this.submittingOrder() || this.loading() || this.loadError() || !this.cart().length) throw new OrderError('INVALID_CART');
+    if (this.savingCatalog() || this.submittingOrder() || this.loading() || this.loadError() || !this.cart().length) throw new OrderError('INVALID_CART');
     this.submittingOrder.set(true);
     try {
       const items = this.cart().map(item => {

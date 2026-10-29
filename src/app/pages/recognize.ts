@@ -1,9 +1,11 @@
 import { Component, ElementRef, OnDestroy, inject, signal, viewChild } from '@angular/core';
-import { I18n, Translate } from '../core/i18n';
+import { Translate } from '../core/i18n';
 import { Detector } from '../core/detector';
-import { INPUT_SIZE, OBJECT_LABELS, resizedGeometry, maskOverlay } from '../core/vision';
+import { INPUT_SIZE, resizedGeometry, maskOverlay } from '../core/vision';
 import type { Detection, ImageGeometry } from '../core/vision';
-import type { PatternCandidate, RecognitionMode, RecognitionPhase } from '../core/bag-pattern';
+import type { PatternCandidate, RecognitionPhase } from '../core/bag-pattern';
+
+const PATTERN_CONFIDENCE_THRESHOLD = .1;
 
 @Component({
   selector: 'shop-recognize',
@@ -13,53 +15,21 @@ import type { PatternCandidate, RecognitionMode, RecognitionPhase } from '../cor
   styleUrl: './recognize.css'
 })
 export class RecognizePage implements OnDestroy {
-  readonly i18n = inject(I18n);
   private readonly detector = inject(Detector);
   private readonly camera = viewChild<ElementRef<HTMLVideoElement>>('camera');
   private readonly maskCanvas = viewChild<ElementRef<HTMLCanvasElement>>('maskCanvas');
   readonly preview = signal('');
   readonly busy = signal(false);
   readonly phase = signal<RecognitionPhase>('loading');
-  readonly mode = signal<RecognitionMode>('pattern');
   readonly candidates = signal<PatternCandidate[]>([]);
-  readonly detections = signal<Detection[]>([]);
   readonly completed = signal(false);
   readonly error = signal('');
   readonly cameraOpen = signal(false);
   readonly cameraStarting = signal(false);
-  readonly minConfidence = signal(10);
-  readonly showMasks = signal(true);
   private image?: HTMLImageElement;
   private objectUrl?: string;
   private stream?: MediaStream;
   private destroyed = false;
-
-  label(classId: number): string {
-    const index = { en: 0, ru: 1, uk: 2 }[this.i18n.language()];
-    return OBJECT_LABELS[classId][index];
-  }
-
-  confidence(value: number): string {
-    return new Intl.NumberFormat(this.i18n.language(), { style: 'percent', maximumFractionDigits: 0 }).format(value);
-  }
-
-  setConfidence(event: Event): void {
-    this.minConfidence.set(Number((event.target as HTMLInputElement).value));
-    this.completed.set(false);
-    this.detections.set([]);
-    this.candidates.set([]);
-    this.clearMasks();
-  }
-
-  setMode(event: Event): void {
-    this.mode.set((event.target as HTMLSelectElement).value === 'objects' ? 'objects' : 'pattern');
-    this.minConfidence.set(this.mode() === 'objects' ? 25 : 10);
-    this.completed.set(false);
-    this.detections.set([]);
-    this.candidates.set([]);
-    this.error.set('');
-    this.clearMasks();
-  }
 
   matches(): number { return this.candidates().filter(candidate => candidate.matched).length; }
 
@@ -77,10 +47,8 @@ export class RecognizePage implements OnDestroy {
     const sourceContext = source.getContext('2d')!;
     const overlay = sourceContext.createImageData(160, 160);
     const objectMask = maskOverlay(detections);
-    if (this.mode() === 'pattern') {
-      for (let pixel = 0; pixel < objectMask.length; pixel += 4) {
-        if (objectMask[pixel + 3]) objectMask.set([28, 120, 200, objectMask[pixel + 3] > 100 ? 200 : 65], pixel);
-      }
+    for (let pixel = 0; pixel < objectMask.length; pixel += 4) {
+      if (objectMask[pixel + 3]) objectMask.set([28, 120, 200, objectMask[pixel + 3] > 100 ? 200 : 65], pixel);
     }
     overlay.data.set(objectMask);
     sourceContext.putImageData(overlay, 0, 0);
@@ -126,7 +94,6 @@ export class RecognizePage implements OnDestroy {
     this.busy.set(true);
     this.error.set('');
     this.completed.set(false);
-    this.detections.set([]);
     this.candidates.set([]);
     this.clearMasks();
     try {
@@ -188,7 +155,6 @@ export class RecognizePage implements OnDestroy {
     this.busy.set(true);
     this.error.set('');
     this.completed.set(false);
-    this.detections.set([]);
     this.candidates.set([]);
     this.clearMasks();
     this.phase.set('loading');
@@ -202,12 +168,11 @@ export class RecognizePage implements OnDestroy {
       context.fillRect(0, 0, INPUT_SIZE, INPUT_SIZE);
       context.drawImage(this.image, geometry.padX, geometry.padY, geometry.width, geometry.height);
       const pixels = context.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE).data;
-      const result = await this.detector.detect(pixels, geometry, phase => this.phase.set(phase), this.minConfidence() / 100, this.mode());
+      const result = await this.detector.detect(pixels, geometry, phase => this.phase.set(phase), PATTERN_CONFIDENCE_THRESHOLD, 'pattern');
       if (this.destroyed) return;
-      const detections = this.mode() === 'pattern' ? result.candidates.map(candidate => candidate.detection) : result.detections;
+      const detections = result.candidates.map(candidate => candidate.detection);
       this.candidates.set(result.candidates);
       this.drawMasks(detections, geometry, result.candidates);
-      this.detections.set(detections);
       this.completed.set(true);
     } catch (error) {
       if (!this.destroyed) {

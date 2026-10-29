@@ -1,16 +1,5 @@
 <h1>{{ 'Что на фото?' | t }}</h1>
 <p>{{ 'Выберите фото или сделайте снимок. Изображения обрабатываются на вашем устройстве.' | t }}</p>
-<label class="mode" for="recognition-mode">{{ 'Режим поиска' | t }}
-  <select id="recognition-mode" [value]="mode()" [disabled]="busy() || cameraStarting()" (change)="setMode($event)">
-    <option value="pattern">{{ 'Сумки и шахматный узор' | t }}</option>
-    <option value="objects">{{ 'Все объекты' | t }}</option>
-  </select>
-</label>
-@if (mode() === 'pattern') {
-  <p class="hint">{{ 'Сначала выделяются маски объектов-кандидатов, затем внутри них проверяется чередование светлых и тёмных клеток. Совпадение узора не определяет конкретную модель или бренд сумки.' | t }}</p>
-} @else {
-  <p class="hint">{{ 'Пока распознаются обычные объекты, включая людей, рюкзаки и сумки. Это не поиск конкретных товаров каталога.' | t }}</p>
-}
 <p class="hint">{{ 'Первый запуск загружает модель размером около 42 МБ. Фотографии остаются на вашем устройстве.' | t }}</p>
 
 <div class="actions">
@@ -22,15 +11,6 @@
   <button type="button" (click)="example()" [disabled]="busy() || cameraStarting()">{{ 'Попробовать пример' | t }}</button>
 </div>
 <p class="hint">{{ 'JPG, PNG или WebP, до 20 МБ. Первый запуск может занять немного времени.' | t }}</p>
-<div class="settings">
-  <label for="confidence">{{ 'Порог уверенности' | t }}: {{ confidence(minConfidence() / 100) }}</label>
-  <input id="confidence" type="range" min="10" max="80" step="5" [value]="minConfidence()" [disabled]="busy()" (input)="setConfidence($event)">
-  @if (mode() === 'pattern') {
-    <small>{{ 'Порог применяется к исходным маскам YOLO. Низкий порог расширяет список кандидатов.' | t }}</small>
-  } @else {
-    <small>{{ 'Если сумка не найдена, уменьшите порог и запустите распознавание ещё раз. Низкий порог увеличивает число ошибочных результатов.' | t }}</small>
-  }
-</div>
 
 <video #camera [hidden]="!cameraOpen()" autoplay muted playsinline [attr.aria-label]="'Камера' | t"></video>
 @if (cameraOpen()) {
@@ -43,50 +23,23 @@
 @if (preview()) {
   <div class="preview" [attr.aria-busy]="busy()">
     <img [src]="preview()" [alt]="'Выбранное фото' | t">
-    <canvas #maskCanvas class="mask" aria-hidden="true" [hidden]="!showMasks()"></canvas>
-    @for (object of detections(); track $index) {
-      <span class="object-label" aria-hidden="true" [hidden]="!showMasks()"
-        [style.left.%]="object.x * 100" [style.top.%]="object.y * 100">{{ label(object.classId) }} {{ confidence(object.confidence) }}</span>
-    }
+    <canvas #maskCanvas class="mask" aria-hidden="true"></canvas>
   </div>
-  @if (detections().length) {
-    <label class="toggle"><input type="checkbox" [checked]="showMasks()" (change)="showMasks.set($any($event.target).checked)">{{ 'Показать выделение' | t }}</label>
-  }
   <button class="analyze" type="button" (click)="analyze()" [disabled]="busy() || cameraOpen() || cameraStarting()">{{ 'Распознать' | t }}</button>
 }
 
 <p role="status" aria-live="polite">
   @if (busy()) {
-    {{ (phase() === 'loading' ? 'Подготовка распознавания…' : phase() === 'texture' ? 'Проверка узора внутри масок…' : 'Распознавание…') | t }}
+    {{ (phase() === 'loading' ? 'Подготовка распознавания…' : 'Распознавание…') | t }}
   } @else if (completed()) {
-    @if (mode() === 'pattern') {
-      {{ 'Кандидатов с похожим узором:' | t }} {{ matches() }}
-    } @else { {{ 'Найдено объектов:' | t }} {{ detections().length }} }
+    {{ 'Кандидатов с похожим узором:' | t }} {{ matches() }}
   }
 </p>
 @if (error()) { <p class="error" role="alert">{{ error() | t }}</p> }
 @if (completed()) {
-  @if (mode() === 'pattern') {
+  @if (candidates().length) {
     <p class="hint">{{ 'Цветная маска показывает область объекта. Оранжевые участки — найденную текстуру.' | t }}</p>
-    <ul class="candidate-list" [attr.aria-label]="'Проверка масок' | t">
-      @for (candidate of candidates(); track $index) {
-        <li [class.matched]="candidate.matched">
-          <strong>{{ (candidate.matched ? 'Найден похожий шахматный узор.' : 'Шахматный узор не найден.') | t }}</strong>
-          <span>{{ 'Исходный класс YOLO' | t }}: {{ label(candidate.detection.classId) }} — {{ confidence(candidate.detection.confidence) }}</span>
-          <span>{{ 'Доля узора внутри маски' | t }}: {{ confidence(candidate.coverage) }}</span>
-          @if (candidate.detection.classId === 27) {
-            <small>{{ 'Исходный класс может быть ошибочным. Маска проверена как область-кандидат, объект не переименован в сумку.' | t }}</small>
-          }
-        </li>
-      } @empty { <li>{{ 'Подходящие области не найдены. Попробуйте другое фото или ракурс.' | t }}</li> }
-    </ul>
-  } @else if (detections().length) {
-    <ul [attr.aria-label]="'Найденные объекты' | t">
-      @for (box of detections(); track $index) {
-        <li>{{ label(box.classId) }} — {{ confidence(box.confidence) }}</li>
-      }
-    </ul>
   } @else {
-    <p>{{ 'Объекты не найдены. Попробуйте другое фото или снимок с лучшим освещением.' | t }}</p>
+    <p>{{ 'Подходящие области не найдены. Попробуйте другое фото или ракурс.' | t }}</p>
   }
 }

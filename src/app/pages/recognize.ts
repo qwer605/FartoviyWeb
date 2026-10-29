@@ -1,8 +1,9 @@
 import { Component, ElementRef, OnDestroy, inject, signal, viewChild } from '@angular/core';
 import { I18n, Translate } from '../core/i18n';
 import { Detector } from '../core/detector';
-import { INPUT_SIZE, OBJECT_LABELS, resizedGeometry } from '../core/vision';
-import type { Detection } from '../core/vision';
+import { INPUT_SIZE, OBJECT_LABELS, resizedGeometry, maskOverlay } from '../core/vision';
+import type { Detection, ImageGeometry } from '../core/vision';
+import type { PatternCandidate, RecognitionMode, RecognitionPhase } from '../core/bag-pattern';
 
 @Component({
   selector: 'shop-recognize',
@@ -15,14 +16,19 @@ export class RecognizePage implements OnDestroy {
   readonly i18n = inject(I18n);
   private readonly detector = inject(Detector);
   private readonly camera = viewChild<ElementRef<HTMLVideoElement>>('camera');
+  private readonly maskCanvas = viewChild<ElementRef<HTMLCanvasElement>>('maskCanvas');
   readonly preview = signal('');
   readonly busy = signal(false);
-  readonly phase = signal<'loading' | 'running'>('loading');
+  readonly phase = signal<RecognitionPhase>('loading');
+  readonly mode = signal<RecognitionMode>('pattern');
+  readonly candidates = signal<PatternCandidate[]>([]);
   readonly detections = signal<Detection[]>([]);
   readonly completed = signal(false);
   readonly error = signal('');
   readonly cameraOpen = signal(false);
   readonly cameraStarting = signal(false);
+  readonly minConfidence = signal(10);
+  readonly showMasks = signal(true);
   private image?: HTMLImageElement;
   private objectUrl?: string;
   private stream?: MediaStream;
@@ -35,6 +41,67 @@ export class RecognizePage implements OnDestroy {
 
   confidence(value: number): string {
     return new Intl.NumberFormat(this.i18n.language(), { style: 'percent', maximumFractionDigits: 0 }).format(value);
+  }
+
+  setConfidence(event: Event): void {
+    this.minConfidence.set(Number((event.target as HTMLInputElement).value));
+    this.completed.set(false);
+    this.detections.set([]);
+    this.candidates.set([]);
+    this.clearMasks();
+  }
+
+  setMode(event: Event): void {
+    this.mode.set((event.target as HTMLSelectElement).value === 'objects' ? 'objects' : 'pattern');
+    this.minConfidence.set(this.mode() === 'objects' ? 25 : 10);
+    this.completed.set(false);
+    this.detections.set([]);
+    this.candidates.set([]);
+    this.error.set('');
+    this.clearMasks();
+  }
+
+  matches(): number { return this.candidates().filter(candidate => candidate.matched).length; }
+
+  private clearMasks(): void {
+    const canvas = this.maskCanvas()?.nativeElement;
+    if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  private drawMasks(detections: Detection[], geometry: ImageGeometry, candidates: PatternCandidate[]): void {
+    const canvas = this.maskCanvas()!.nativeElement;
+    canvas.width = geometry.width;
+    canvas.height = geometry.height;
+    const source = document.createElement('canvas');
+    source.width = source.height = 160;
+    const sourceContext = source.getContext('2d')!;
+    const overlay = sourceContext.createImageData(160, 160);
+    const objectMask = maskOverlay(detections);
+    if (this.mode() === 'pattern') {
+      for (let pixel = 0; pixel < objectMask.length; pixel += 4) {
+        if (objectMask[pixel + 3]) objectMask.set([28, 120, 200, objectMask[pixel + 3] > 100 ? 200 : 65], pixel);
+      }
+    }
+    overlay.data.set(objectMask);
+    sourceContext.putImageData(overlay, 0, 0);
+    // Remove the same centered letterbox used by inference before fitting the original photo.
+    const context = canvas.getContext('2d')!;
+    context.imageSmoothingEnabled = true;
+    context.drawImage(source, geometry.padX / 4, geometry.padY / 4, geometry.width / 4, geometry.height / 4,
+      0, 0, canvas.width, canvas.height);
+    for (const candidate of candidates) {
+      if (!candidate.matched) continue;
+      const texture = candidate.texture;
+      const layer = document.createElement('canvas');
+      layer.width = texture.width; layer.height = texture.height;
+      const paint = layer.getContext('2d')!;
+      const overlay = paint.createImageData(layer.width, layer.height);
+      for (let pixel = 0; pixel < texture.mask.length; pixel++) {
+        if (texture.mask[pixel]) overlay.data.set([255, 159, 10, 190], pixel * 4);
+      }
+      paint.putImageData(overlay, 0, 0);
+      context.drawImage(layer, 0, 0, canvas.width, canvas.height);
+    }
   }
 
   async selectFile(event: Event): Promise<void> {
@@ -60,6 +127,8 @@ export class RecognizePage implements OnDestroy {
     this.error.set('');
     this.completed.set(false);
     this.detections.set([]);
+    this.candidates.set([]);
+    this.clearMasks();
     try {
       const image = new Image();
       image.src = url;
@@ -120,19 +189,24 @@ export class RecognizePage implements OnDestroy {
     this.error.set('');
     this.completed.set(false);
     this.detections.set([]);
+    this.candidates.set([]);
+    this.clearMasks();
     this.phase.set('loading');
     try {
       const geometry = resizedGeometry(this.image.naturalWidth, this.image.naturalHeight);
       const canvas = document.createElement('canvas');
       canvas.width = canvas.height = INPUT_SIZE;
       const context = canvas.getContext('2d', { willReadFrequently: true })!;
-      // Match the model's processor: longest edge 640, black padding on right/bottom.
-      context.fillStyle = 'black';
+      // Ultralytics letterbox: longest edge 640, centered padding with RGB 114.
+      context.fillStyle = 'rgb(114, 114, 114)';
       context.fillRect(0, 0, INPUT_SIZE, INPUT_SIZE);
-      context.drawImage(this.image, 0, 0, geometry.width, geometry.height);
+      context.drawImage(this.image, geometry.padX, geometry.padY, geometry.width, geometry.height);
       const pixels = context.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE).data;
-      const detections = await this.detector.detect(pixels, geometry, phase => this.phase.set(phase));
+      const result = await this.detector.detect(pixels, geometry, phase => this.phase.set(phase), this.minConfidence() / 100, this.mode());
       if (this.destroyed) return;
+      const detections = this.mode() === 'pattern' ? result.candidates.map(candidate => candidate.detection) : result.detections;
+      this.candidates.set(result.candidates);
+      this.drawMasks(detections, geometry, result.candidates);
       this.detections.set(detections);
       this.completed.set(true);
     } catch (error) {

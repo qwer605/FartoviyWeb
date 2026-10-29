@@ -1,9 +1,12 @@
 export const INPUT_SIZE = 640;
 
-export interface ImageGeometry { width: number; height: number; }
-export interface Detection { classId: number; confidence: number; x: number; y: number; width: number; height: number; }
+export interface ImageGeometry { width: number; height: number; padX: number; padY: number; }
+export interface Detection {
+  classId: number; confidence: number; x: number; y: number; width: number; height: number;
+  mask: { width: number; height: number; data: Uint8Array };
+}
 
-// COCO class order used by the bundled YOLOv10 model: English, Russian, Ukrainian.
+// COCO class order used by the bundled YOLO26-seg model: English, Russian, Ukrainian.
 export const OBJECT_LABELS = [
   ['person', 'человек', 'людина'], ['bicycle', 'велосипед', 'велосипед'],
   ['car', 'автомобиль', 'автомобіль'], ['motorcycle', 'мотоцикл', 'мотоцикл'],
@@ -50,7 +53,10 @@ export function resizedGeometry(width: number, height: number): ImageGeometry {
     throw new Error('Invalid image dimensions');
   }
   const scale = INPUT_SIZE / Math.max(width, height);
-  return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
+  const resizedWidth = Math.max(1, Math.round(width * scale));
+  const resizedHeight = Math.max(1, Math.round(height * scale));
+  return { width: resizedWidth, height: resizedHeight,
+    padX: Math.floor((INPUT_SIZE - resizedWidth) / 2), padY: Math.floor((INPUT_SIZE - resizedHeight) / 2) };
 }
 
 export function rgbaToTensor(rgba: Uint8ClampedArray): Float32Array {
@@ -65,26 +71,79 @@ export function rgbaToTensor(rgba: Uint8ClampedArray): Float32Array {
   return data;
 }
 
-export function decodeDetections(data: ArrayLike<number>, dims: readonly number[], geometry: ImageGeometry): Detection[] {
-  // This pinned export returns NMS-free [x1, y1, x2, y2, score, class] rows.
-  if (dims.length !== 3 || dims[0] !== 1 || dims[2] !== 6 || data.length !== dims[1] * 6) {
-    throw new Error('Unexpected YOLOv10 output shape');
+export function decodeSegments(data: ArrayLike<number>, dims: readonly number[], prototypes: ArrayLike<number>,
+  protoDims: readonly number[], geometry: ImageGeometry, threshold = .25,
+  classIds: readonly number[] = OBJECT_LABELS.map((_, index) => index)): Detection[] {
+  // Pinned official end-to-end export: [1,300,6+32] and [1,32,160,160]. No NMS.
+  if (dims.length !== 3 || dims[0] !== 1 || dims[2] !== 38 || data.length !== dims[1] * 38
+    || protoDims.length !== 4 || protoDims[0] !== 1 || protoDims[1] !== 32
+    || protoDims[2] !== 160 || protoDims[3] !== 160 || prototypes.length !== 32 * 160 * 160) {
+    throw new Error('Unexpected YOLO26 segmentation output shape');
   }
+  if (!Number.isFinite(threshold) || threshold < .1 || threshold > .8
+    || ![geometry.width, geometry.height, geometry.padX, geometry.padY].every(Number.isInteger)
+    || geometry.width <= 0 || geometry.height <= 0 || geometry.padX < 0 || geometry.padY < 0
+    || geometry.width + geometry.padX > INPUT_SIZE || geometry.height + geometry.padY > INPUT_SIZE) {
+    throw new Error('Invalid segmentation geometry or threshold');
+  }
+  const candidates: { offset: number; box: Omit<Detection, 'mask'>; bounds: number[] }[] = [];
   const result: Detection[] = [];
   const clamp = (value: number) => Math.min(1, Math.max(0, value));
-  for (let i = 0; i < data.length; i += 6) {
+  for (let i = 0; i < data.length; i += 38) {
     const confidence = data[i + 4];
-    const classId = data[i + 5];
-    if (confidence < 0.3 || confidence > 1 || !Number.isFinite(confidence)
+    const modelClassId = data[i + 5];
+    const classId = classIds[modelClassId];
+    if (confidence < threshold || confidence > 1 || !Number.isFinite(confidence)
+      || !Number.isInteger(modelClassId) || modelClassId < 0 || modelClassId >= classIds.length
       || !Number.isInteger(classId) || classId < 0 || classId >= OBJECT_LABELS.length) continue;
     const coordinates = [data[i], data[i + 1], data[i + 2], data[i + 3]];
-    if (!coordinates.every(Number.isFinite)) continue;
+    if (!coordinates.every(Number.isFinite) || !Array.from({ length: 32 }, (_, c) => data[i + 6 + c]).every(Number.isFinite)) continue;
     const [x1, y1, x2, y2] = coordinates;
-    const x = clamp(x1 / geometry.width);
-    const y = clamp(y1 / geometry.height);
-    const width = clamp(x2 / geometry.width) - x;
-    const height = clamp(y2 / geometry.height) - y;
-    if (width > 0 && height > 0) result.push({ classId, confidence, x, y, width, height });
+    const x = clamp((x1 - geometry.padX) / geometry.width);
+    const y = clamp((y1 - geometry.padY) / geometry.height);
+    const width = clamp((x2 - geometry.padX) / geometry.width) - x;
+    const height = clamp((y2 - geometry.padY) / geometry.height) - y;
+    if (width > 0 && height > 0) candidates.push({ offset: i, box: { classId, confidence, x, y, width, height }, bounds: coordinates });
   }
-  return result.sort((a, b) => b.confidence - a.confidence).slice(0, 30);
+  for (const candidate of candidates.sort((a, b) => b.box.confidence - a.box.confidence)) {
+    const mask = new Uint8Array(160 * 160);
+    const [x1, y1, x2, y2] = candidate.bounds;
+    const left = Math.max(0, Math.ceil(Math.max(x1, geometry.padX) / 4 - .5));
+    const top = Math.max(0, Math.ceil(Math.max(y1, geometry.padY) / 4 - .5));
+    const right = Math.min(160, Math.ceil(Math.min(x2, geometry.padX + geometry.width) / 4 - .5));
+    const bottom = Math.min(160, Math.ceil(Math.min(y2, geometry.padY + geometry.height) / 4 - .5));
+    let pixels = 0;
+    for (let y = top; y < bottom; y++) {
+      for (let x = left; x < right; x++) {
+        const pixel = y * 160 + x;
+        let logit = 0;
+        for (let channel = 0; channel < 32; channel++) logit += data[candidate.offset + 6 + channel] * prototypes[channel * 160 * 160 + pixel];
+        // sigmoid(logit) > .5 is equivalent to logit > 0.
+        if (Number.isFinite(logit) && logit > 0) { mask[pixel] = 255; pixels++; }
+      }
+    }
+    if (pixels) result.push({ ...candidate.box, mask: { width: 160, height: 160, data: mask } });
+    if (result.length === 30) break;
+  }
+  return result;
+}
+
+/** Paint only predicted mask pixels; confidence order resolves overlapping instances. */
+export function maskOverlay(detections: readonly Detection[]): Uint8ClampedArray {
+  const pixels = new Uint8ClampedArray(160 * 160 * 4);
+  const colors = [[0, 164, 126], [38, 121, 230], [230, 125, 20], [164, 66, 213], [214, 55, 100]];
+  for (const detection of [...detections].sort((a, b) => a.confidence - b.confidence)) {
+    const { data, width, height } = detection.mask;
+    if (width !== 160 || height !== 160 || data.length !== width * height) throw new Error('Invalid display mask');
+    const color = colors[detection.classId % colors.length];
+    for (let pixel = 0; pixel < data.length; pixel++) {
+      if (!data[pixel]) continue;
+      const x = pixel % width;
+      const y = Math.floor(pixel / width);
+      const boundary = x === 0 || y === 0 || x === width - 1 || y === height - 1
+        || !data[pixel - 1] || !data[pixel + 1] || !data[pixel - width] || !data[pixel + width];
+      pixels.set([...color, boundary ? 230 : 100], pixel * 4);
+    }
+  }
+  return pixels;
 }

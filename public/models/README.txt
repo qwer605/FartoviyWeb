@@ -1,23 +1,30 @@
-YOLOv10n ONNX uint8 — COCO object detection
+YOLO26s-seg ONNX — COCO instance segmentation
 
-Source: https://huggingface.co/onnx-community/yolov10n
-Upstream: https://github.com/THU-MIG/yolov10
-Revision: 57657320425ee34056408a57ad9d29c4d4815bd8
-File: onnx/model_uint8.onnx (renamed to yolov10n-uint8.onnx)
-Download: https://huggingface.co/onnx-community/yolov10n/resolve/57657320425ee34056408a57ad9d29c4d4815bd8/onnx/model_uint8.onnx
-SHA256: 85630e74204ebed54bf990274f45625bdaae4d46f179bf072b5fda3ccf36a42e
-Size: 2,650,737 bytes
-License: AGPL-3.0, included in LICENSE-YOLOv10.txt.
+Official source: https://github.com/ultralytics/assets/releases/tag/v8.4.0
+Download: https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26s-seg.onnx
+Documentation: https://docs.ultralytics.com/tasks/segment/
+SHA256: d205b2c489e7cf0cdb183bb23e56dc8a32a79602e8c5b1f5ecb01af0dc6822c3
+Size: 41,912,273 bytes
+License: AGPL-3.0, included in LICENSE-YOLO.txt.
 
 Input: float32 RGB NCHW [1, 3, 640, 640], values divided by 255.
-Resize longest edge to 640, preserve aspect ratio, pad right/bottom with zero.
-Output: [1, 300, 6] rows [x1, y1, x2, y2, confidence, COCO class ID].
-The export includes end-to-end selection; do not apply YOLOv8-style NMS.
+Preserve aspect ratio; resize longest edge to 640; centered letterbox padding RGB 114.
+Output 0: [1, 300, 38], rows [x1, y1, x2, y2, confidence, COCO class ID, 32 mask coefficients].
+Output 1: [1, 32, 160, 160], channel-first mask prototypes.
+The pinned export uses end-to-end selection: do not apply YOLOv8-style NMS.
+Instance mask = sigmoid(coefficients * prototypes) > 0.5, cropped to predicted box.
+Remove the same centered padding when mapping coordinates and masks onto the photo.
 
-The browser uses ONNX Runtime Web's WASM backend in a dedicated worker,
-with one WASM thread so GitHub Pages needs no COOP/COEP headers.
-Weights and matching runtime files are hosted alongside the application.
-This generic model does not recognize individual products or clothing SKUs.
+ONNX Runtime Web WASM runs in a dedicated worker with one WASM thread.
+Weights and runtime are hosted with the application; GitHub Pages needs no COOP/COEP.
+Photos stay on the user's device.
+
+The default pattern mode checks up to eight deduplicated handbag/backpack/suitcase/tie
+mask proposals. "tie" is included because some side-view bags are misclassified as ties.
+Source class labels remain unchanged. The geometric checker-texture verifier runs
+only inside a proposal mask; a match is not a bag/brand/SKU/authenticity classifier.
+Different textures may match; missing proposals cannot be recovered by stage two.
+Confidence and texture coverage are separate quantities and are labeled separately.
 
 Demo image (public/assets/vision-sample.jpg):
 https://github.com/ultralytics/ultralytics/blob/main/ultralytics/assets/bus.jpg

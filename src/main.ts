@@ -4,5 +4,5 @@ import { App } from './app/app';
 import { routes } from './app/app.routes';
 
 bootstrapApplication(App, {
-  providers: [provideRouter(routes, withHashLocation(), withInMemoryScrolling({ scrollPositionRestoration: 'top' }))]
+  providers: [provideRouter(routes, withHashLocation(), withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }))]
 }).catch(console.error);

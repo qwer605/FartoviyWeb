@@ -1,0 +1,55 @@
+import { test, expect } from '@playwright/test';
+
+test('home links lead to the collection, category filters and editorial sections', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('./');
+  await expect(page).toHaveURL(/#\/home$/);
+  await expect(page.locator('.hero h1')).toHaveText('FARTOVIY*');
+  await expect(page.locator('.featured-grid shop-product-card')).toHaveCount(4);
+  await expect(page.locator('.hero-image img')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('home-desktop.png'), fullPage: true });
+  await page.getByRole('link', { name: 'Lookbook', exact: true }).click();
+  await expect(page).toHaveURL(/#\/home#lookbook$/);
+  await expect(page.locator('#lookbook')).toBeInViewport({ ratio: 0.8 });
+  await page.getByRole('link', { name: /Explore clothing/ }).click();
+  await expect(page).toHaveURL(/category=clothing/);
+  await expect(page.locator('shop-product-card')).toHaveCount(3);
+  const categories = page.getByRole('navigation', { name: 'Categories' });
+  await categories.getByRole('link', { name: /Accessories/ }).click();
+  await expect(page.locator('shop-product-card')).toHaveCount(4);
+  await expect(page.getByRole('heading', { name: 'Checkerboard shoulder bag', exact: true })).toBeVisible();
+  await page.reload();
+  await expect(categories.getByRole('link', { name: /Accessories/ })).toHaveAttribute('aria-current', 'page');
+  await categories.getByRole('link', { name: /All pieces/ }).click();
+  await expect(page.locator('shop-product-card')).toHaveCount(9);
+  await page.screenshot({ path: testInfo.outputPath('catalog-desktop.png'), fullPage: true });
+});
+
+test('mobile design retains native capture, category filters, sizing and product details', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('#/home');
+  await expect(page.locator('.featured-grid shop-product-card')).toHaveCount(4);
+  await page.screenshot({ path: testInfo.outputPath('home-mobile.png'), fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Search by photo', exact: true }).click();
+  await (await chooser).setFiles([]);
+  await expect(page.locator('dialog, video')).toHaveCount(0);
+  await page.goto('#/product/runner');
+  await page.getByRole('radio', { name: '39', exact: true }).check();
+  await page.locator('summary').filter({ hasText: /^Details/ }).click();
+  await expect(page.getByText('Item code: runner', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Zoom photo', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Zoom photo', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Zoom photo', exact: true }).click();
+  await page.getByRole('button', { name: 'Add to cart', exact: true }).click();
+  await page.getByRole('link', { name: 'Go to cart', exact: true }).click();
+  await expect(page.getByText('Size: 39', { exact: true })).toBeVisible();
+  await page.goto('#/product/checker-bag');
+  await expect(page.getByRole('img', { name: 'Checkerboard shoulder bag', exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('bag-mobile.png'), fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('combobox', { name: 'Language', exact: true }).selectOption('ru');
+  await expect(page.getByRole('heading', { name: 'Сумка в шахматную клетку', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

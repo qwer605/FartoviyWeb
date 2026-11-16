@@ -1,8 +1,8 @@
-:host { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 100%; }
-button { font: inherit; border: 1px solid #aab5c0; border-radius: 6px; background: #f5f7fa; color: #174c85; cursor: pointer; }
-.camera-button { display: grid; place-items: center; width: 44px; height: 44px; padding: 9px; }
-button:focus-visible { outline: 3px solid #174c85; outline-offset: 3px; }
+:host { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; }
+button { font: inherit; border: 0; border-radius: 0; background: transparent; color: var(--wine); cursor: pointer; }
+.camera-button { display: grid; place-items: center; width: 36px; height: 40px; padding: 7px; }
+button:focus-visible { outline: 2px solid var(--wine); outline-offset: 2px; }
 button:disabled { opacity: .55; cursor: wait; }
-.cancel { padding: 8px 10px; font-size: 14px; }
-.feedback { max-width: 290px; font-size: 14px; color: #555; }
-.error { color: #a01a1a; }
+.cancel { padding: 8px; font-size: 11px; }
+.feedback { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 5; width: max-content; max-width: calc(100vw - 40px); padding: 14px 20px; background: var(--wine); color: var(--paper); font-size: 12px; border: 1px solid var(--paper); }
+.error { background: #73202a; }

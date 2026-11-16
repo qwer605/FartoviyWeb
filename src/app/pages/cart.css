@@ -1,5 +1,5 @@
-:host { display: block; }
-h1 { margin: 0 0 16px; font-size: 26px; }
+:host { display: block; padding: 42px 36px 64px; }
+h1 { margin: 0 0 16px; font-size: 36px; text-transform: uppercase; letter-spacing: -1px; }
 ul { margin: 0; padding: 0; list-style: none; }
 li {
   display: grid;
@@ -7,20 +7,22 @@ li {
   gap: 16px;
   align-items: start;
   padding: 16px 0;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--line);
 }
 img { display: block; width: 96px; height: 96px; object-fit: contain; }
 h2 { margin: 0 0 8px; font-size: 18px; }
 p { margin: 0 0 8px; }
-a { color: #174c85; }
+a { color: var(--wine); }
 button { font: inherit; padding: 4px 10px; cursor: pointer; }
 button:disabled { cursor: default; }
 .quantity { display: flex; align-items: center; gap: 12px; }
 .item-total { text-align: right; }
 .total { margin: 20px 0; font-size: 20px; }
-.checkout-link { display: inline-block; padding: 10px 16px; margin-bottom: 16px; border-radius: 4px; background: #174c85; color: white; text-decoration: none; }
+.checkout-link { display: inline-block; padding: 10px 16px; margin-bottom: 16px; border-radius: 0; background: var(--wine); color: var(--paper); text-decoration: none; }
 @media (max-width: 500px) {
   li { grid-template-columns: 72px minmax(0, 1fr); gap: 12px; }
   img { width: 72px; height: 72px; }
   .item-total { grid-column: 2; text-align: left; }
 }
+
+@media (max-width: 650px) { :host { padding: 28px 18px 40px; } h1 { font-size: 30px; } }

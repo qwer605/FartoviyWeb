@@ -1,16 +1,29 @@
-<h1>{{ 'Каталог' | t }}</h1>
+<div class="catalog-layout">
+<aside>
+  <p class="eyebrow">FARTOVIY / THE EDIT</p>
+  <h1>{{ 'Каталог' | t }}</h1>
+  <nav [attr.aria-label]="'Категории' | t">
+    @for (item of categories; track item.id) {
+      <a routerLink="/catalog" [queryParams]="item.id === 'all' ? {} : { category: item.id }" [class.selected]="category() === item.id" [attr.aria-current]="category() === item.id ? 'page' : null">{{ item.label | t }} <span>({{ count(item.id) }})</span></a>
+    }
+  </nav>
+  <p class="sidebar-note">{{ 'Вещи с характером. Каждый день.' | t }}</p>
+</aside>
+<div class="catalog-content">
 @if (store.loading()) {
   <p role="status">{{ 'Загрузка товаров…' | t }}</p>
 } @else if (store.loadError()) {
   <p role="alert">{{ 'Не удалось открыть локальный каталог. Повторите попытку.' | t }}</p>
   <button type="button" (click)="store.loadProducts()">{{ 'Повторить' | t }}</button>
 } @else {
-  <p>{{ 'Товаров:' | t }} {{ store.products().length }}</p>
+  <div class="catalog-heading"><p>{{ 'Товаров:' | t }} {{ visibleProducts().length }}</p><span>{{ 'Выбрано для тебя' | t }} ↘</span></div>
   <section class="products" [attr.aria-label]="'Список товаров' | t">
-    @for (product of store.products(); track product.id) {
+    @for (product of visibleProducts(); track product.id) {
       <shop-product-card [product]="product" />
     } @empty {
       <p>{{ 'В каталоге пока нет товаров.' | t }}</p>
     }
   </section>
 }
+</div>
+</div>

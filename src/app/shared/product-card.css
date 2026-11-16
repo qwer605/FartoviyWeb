@@ -1,16 +1,13 @@
 :host { display: block; min-width: 0; }
-article {
-  box-sizing: border-box;
-  height: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-}
-img {
-  display: block;
-  width: 100%;
-  height: 200px;
-  object-fit: contain;
-}
-h2 { margin: 12px 0 8px; font-size: 18px; }
-p { margin: 0 0 12px; }
-a { color: #174c85; }
+article { height: 100%; }
+.image-link { display: block; position: relative; background: var(--panel); overflow: hidden; }
+img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; transition: transform .35s ease; }
+.image-link:hover img { transform: scale(1.035); }
+.view-arrow { position: absolute; bottom: 12px; right: 12px; width: 30px; height: 30px; display: grid; place-items: center; background: var(--paper); opacity: 0; transition: opacity .2s; }
+.image-link:hover .view-arrow, .image-link:focus-visible .view-arrow { opacity: 1; }
+.product-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-top: 10px; }
+h2 { margin: 0; font-size: 10px; line-height: 1.5; font-weight: 400; text-transform: uppercase; }
+h2 a { text-decoration: none; }
+h2 a:hover { text-decoration: underline; }
+p { margin: 0; font-size: 10px; white-space: nowrap; }
+@media (max-width: 650px) { .product-meta { flex-direction: column; gap: 3px; } h2, p { font-size: 10px; } }

@@ -1,0 +1,6 @@
+FARTOVIY campaign mood photograph. Generated with the built-in image_gen tool.
+The image illustrates the editorial direction and is not a photo of a catalog SKU.
+The product photos and the user-supplied checker-bag.jpg remain unchanged.
+
+Final prompt:
+Create a photorealistic editorial fashion campaign photograph for the homepage of FARTOVIY, a minimalist streetwear storefront. Wide landscape 3:2 composition. An adult male fashion model with dark curly hair wearing an oversized deep oxblood burgundy zip hoodie and charcoal trousers, standing casually leaning against a pale warm-gray rough concrete wall, shot from a low angle, quiet confident expression. Model placed in the right half and lower part of the image; generous empty light concrete wall across left half and top quarter for live HTML headline overlay. Soft overcast daylight, muted film photography, tactile heavy cotton, subtle grain, premium independent fashion magazine art direction. Restrained colors: burgundy, stone, off-white, charcoal. Cropped mid-thigh, natural anatomy. NO text, NO logos, NO graphics, NO stars, NO watermark. This is a campaign mood image rather than a product listing.

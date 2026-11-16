@@ -1,4 +1,5 @@
 import { findCheckerTexture, TEXTURE_MAX_SIDE } from './checker-texture';
+import { findColorRegionTexture } from './color-regions';
 import type { Detection, ImageGeometry } from './vision';
 import type { TextureResult } from './checker-texture';
 
@@ -6,6 +7,7 @@ export interface PatternCandidate { detection: Detection; texture: TextureResult
 export interface RecognitionResult { detections: Detection[]; candidates: PatternCandidate[]; }
 export type RecognitionPhase = 'loading' | 'running' | 'texture';
 export type RecognitionMode = 'pattern' | 'objects';
+export type PatternMethod = 'grid' | 'regions';
 
 function overlap(a: Detection, b: Detection): number {
   const intersection = Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x))
@@ -26,7 +28,8 @@ export function patternCandidates(detections: readonly Detection[]): Detection[]
 }
 
 /** Verify repeated cells strictly within a model-predicted instance mask. */
-export function checkBagPattern(rgba: Uint8ClampedArray, geometry: ImageGeometry, detection: Detection): PatternCandidate {
+export function checkBagPattern(rgba: Uint8ClampedArray, geometry: ImageGeometry, detection: Detection,
+  method: PatternMethod = 'grid'): PatternCandidate {
   if (rgba.length !== 640 * 640 * 4 || detection.mask.width !== 160 || detection.mask.height !== 160
     || detection.mask.data.length !== 160 * 160
     || ![geometry.width, geometry.height, geometry.padX, geometry.padY].every(Number.isInteger)
@@ -44,7 +47,7 @@ export function checkBagPattern(rgba: Uint8ClampedArray, geometry: ImageGeometry
     pixels.set(rgba.subarray(source, source + 4), pixel * 4);
     if (detection.mask.data[Math.floor(sy / 4) * 160 + Math.floor(sx / 4)]) { allowed[pixel] = 255; area++; }
   }
-  const texture = findCheckerTexture(pixels, width, height, allowed);
+  const texture = (method === 'regions' ? findColorRegionTexture : findCheckerTexture)(pixels, width, height, allowed);
   const textureArea = texture.regions.reduce((sum, region) => sum + region.pixels, 0);
   const coverage = area ? textureArea / area : 0;
   return { detection, texture, coverage, matched: textureArea >= 300 && coverage >= .02 };

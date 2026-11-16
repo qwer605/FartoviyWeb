@@ -29,7 +29,7 @@ async function changeCatalog(page, operation) {
 
 test('reads persisted edits in the catalog, product page and cart after reload', async ({ page }) => {
   await page.goto('#/catalog');
-  await expect(page.getByText('Products: 8', { exact: true })).toBeVisible();
+  await expect(page.getByText('Products: 9', { exact: true })).toBeVisible();
   await changeCatalog(page, 'edit');
   await page.reload();
   await page.getByRole('heading', { name: 'Local Red Runner', exact: true }).getByRole('link').click();
@@ -45,7 +45,7 @@ test('reads persisted edits in the catalog, product page and cart after reload',
 
 test('restores cart entries for locally added products and removes deleted references', async ({ page }) => {
   await page.goto('#/catalog');
-  await expect(page.getByText('Products: 8', { exact: true })).toBeVisible();
+  await expect(page.getByText('Products: 9', { exact: true })).toBeVisible();
   await changeCatalog(page, 'add');
   await page.evaluate(() => localStorage.setItem('fartoviy-cart', JSON.stringify([{ id: 'local-bag', size: 'One size', qty: 2 }])));
   await page.goto('#/cart');
@@ -60,7 +60,7 @@ test('restores cart entries for locally added products and removes deleted refer
 
 test('keeps an empty catalog empty instead of reseeding on each visit', async ({ page }) => {
   await page.goto('#/catalog');
-  await expect(page.getByText('Products: 8', { exact: true })).toBeVisible();
+  await expect(page.getByText('Products: 9', { exact: true })).toBeVisible();
   await changeCatalog(page, 'clear');
   for (let i = 0; i < 2; i++) {
     await page.reload();

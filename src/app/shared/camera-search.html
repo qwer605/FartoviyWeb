@@ -1,0 +1,34 @@
+<button class="camera-button" type="button" (click)="open()" [attr.aria-label]="'Поиск по фото' | t" [title]="'Поиск по фото' | t">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+    <path d="M8 5 9.5 3h5L16 5h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+    <circle cx="12" cy="12.5" r="4" />
+  </svg>
+</button>
+
+<dialog #dialog (cancel)="close()" aria-labelledby="camera-search-title">
+  <section>
+    <div class="dialog-heading">
+      <h2 id="camera-search-title">{{ 'Найти сумку по узору' | t }}</h2>
+      <button class="close" type="button" (click)="close()" [attr.aria-label]="'Закрыть поиск' | t" autofocus>×</button>
+    </div>
+    <p>{{ 'Наведите камеру на сумку. Когда шахматный узор будет найден, откроется её карточка в каталоге.' | t }}</p>
+    <div class="viewfinder">
+      <video #camera autoplay muted playsinline [hidden]="!cameraReady()" [attr.aria-label]="'Камера' | t"></video>
+      @if (preview()) { <img [src]="preview()" [alt]="'Выбранное фото' | t"> }
+      @if (!cameraReady() && !preview()) { <span>{{ 'Камера или фото' | t }}</span> }
+    </div>
+    <p role="status" aria-live="polite">{{ status() | t }}</p>
+    @if (error()) { <p class="error" role="alert">{{ error() | t }}</p> }
+    <div class="actions">
+      @if (!cameraReady()) {
+        <button type="button" (click)="startCamera()" [disabled]="busy() || starting()">{{ 'Включить камеру' | t }}</button>
+      }
+      <label class="file-button" [class.disabled]="busy() || starting()">
+        {{ 'Сделать фото или загрузить' | t }}
+        <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment"
+          [disabled]="busy() || starting()" (change)="selectFile($event)">
+      </label>
+    </div>
+    <p class="hint">{{ 'Фотографии обрабатываются на устройстве. JPG, PNG или WebP до 20 МБ.' | t }}</p>
+  </section>
+</dialog>

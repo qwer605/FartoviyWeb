@@ -93,7 +93,7 @@ test('upgrades the existing v1 catalog without replacing user changes', async t 
   });
   const database = new ProductDatabase(products, factory);
   t.after(() => database.close());
-  assert.equal((await database.list()).length, 1);
+  assert.equal((await database.list()).length, 2);
   assert.equal((await database.get('runner')).price, 1234);
   assert.deepEqual(await database.listOrders(), []);
   const request = draft(); request.items[0].expectedPrice = 1234;

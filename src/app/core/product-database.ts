@@ -1,9 +1,10 @@
+import { CHECKER_BAG_ID } from './catalog';
 import type { Product } from './catalog';
 import { buildOrder, validateOrderDraft } from './order';
 import type { Order, OrderDraft } from './order';
 
 export const PRODUCT_DATABASE_NAME = 'fartoviy-products';
-const VERSION = 2;
+const VERSION = 3;
 const STORE = 'products';
 
 export function validateProduct(value: unknown): asserts value is Product {
@@ -20,7 +21,7 @@ export function validateProduct(value: unknown): asserts value is Product {
   }
 }
 
-/** Durable browser-local catalog. Seed data is inserted only when the DB is created. */
+/** Durable browser-local catalog with explicit, one-time catalog migrations. */
 export class ProductDatabase {
   private connection?: Promise<IDBDatabase>;
   private readonly seed: readonly Product[];
@@ -116,6 +117,15 @@ export class ProductDatabase {
           if (event.oldVersion < 2) {
             const orders = request.result.createObjectStore('orders', { keyPath: 'id' });
             orders.createIndex('createdAt', 'createdAt', { unique: false });
+          }
+          if (event.oldVersion > 0 && event.oldVersion < 3) {
+            const bag = this.seed.find(product => product.id === CHECKER_BAG_ID);
+            if (bag) {
+              validateProduct(bag);
+              const store = request.transaction!.objectStore(STORE);
+              const existing = store.get(CHECKER_BAG_ID);
+              existing.onsuccess = () => { if (existing.result === undefined) store.add(bag); };
+            }
           }
         } catch (error) { request.transaction?.abort(); fail(error); }
       };

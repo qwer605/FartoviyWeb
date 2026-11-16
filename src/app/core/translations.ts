@@ -1,6 +1,7 @@
 import type { Language } from './language';
 
 export const english = {
+  "Отменить поиск": "Cancel search",
   "Сумка в шахматную клетку": "Checkerboard shoulder bag",
   "Светлая сумка с тёмным шахматным узором, регулируемым ремнём и бежевой отделкой.": "A light shoulder bag with a dark checkerboard pattern, an adjustable strap and beige trim.",
   "Поиск по фото": "Search by photo",
@@ -149,6 +150,7 @@ export const english = {
 };
 
 export const ukrainian: Record<keyof typeof english, string> = {
+  "Отменить поиск": "Скасувати пошук",
   "Сумка в шахматную клетку": "Сумка в шахову клітинку",
   "Светлая сумка с тёмным шахматным узором, регулируемым ремнём и бежевой отделкой.": "Світла сумка з темним шаховим візерунком, регульованим ременем і бежевим оздобленням.",
   "Поиск по фото": "Пошук за фото",

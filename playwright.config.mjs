@@ -10,8 +10,6 @@ export default defineConfig({
     browserName: 'chromium',
     channel: process.env.PLAYWRIGHT_CHANNEL || undefined,
     locale: 'en-US',
-    permissions: ['camera'],
-    launchOptions: { args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] },
     screenshot: 'only-on-failure'
   },
   webServer: {

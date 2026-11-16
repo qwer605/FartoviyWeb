@@ -1,20 +1,8 @@
-:host { display: inline-flex; }
-button, .file-button { font: inherit; border: 1px solid #aab5c0; border-radius: 6px; padding: 10px 14px; background: #f5f7fa; color: #174c85; cursor: pointer; }
+:host { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 100%; }
+button { font: inherit; border: 1px solid #aab5c0; border-radius: 6px; background: #f5f7fa; color: #174c85; cursor: pointer; }
 .camera-button { display: grid; place-items: center; width: 44px; height: 44px; padding: 9px; }
-button:focus-visible, .file-button:focus-within { outline: 3px solid #174c85; outline-offset: 3px; }
-button:disabled, .disabled { opacity: .55; cursor: wait; }
-dialog { width: min(520px, calc(100vw - 48px)); max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: 12px; color: #222; box-shadow: 0 16px 60px #0004; }
-dialog::backdrop { background: #111a; }
-section { padding: 20px; }
-.dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-h2 { margin: 0; font-size: 22px; }
-.close { flex-shrink: 0; font-size: 26px; line-height: 1; padding: 7px 12px; }
-p { margin: 12px 0; }
-.viewfinder { display: grid; place-items: center; min-height: 180px; background: #101820; color: #d8e1eb; border-radius: 8px; overflow: hidden; }
-video, img { display: block; width: 100%; max-height: 45dvh; object-fit: contain; }
-video[hidden] { display: none; }
-.actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.file-button { position: relative; overflow: hidden; }
-input[type=file] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: inherit; }
-.hint { color: #555; font-size: 13px; }
+button:focus-visible { outline: 3px solid #174c85; outline-offset: 3px; }
+button:disabled { opacity: .55; cursor: wait; }
+.cancel { padding: 8px 10px; font-size: 14px; }
+.feedback { max-width: 290px; font-size: 14px; color: #555; }
 .error { color: #a01a1a; }

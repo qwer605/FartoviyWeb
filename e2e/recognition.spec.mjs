@@ -1,137 +1,123 @@
 import { test, expect } from '@playwright/test';
 
 const bag = 'public/assets/checker-bag.jpg';
-const searchButton = page => page.getByRole('button', { name: 'Search by photo', exact: true });
-const dialog = page => page.getByRole('dialog', { name: 'Find a bag by its pattern', exact: true });
-const upload = page => dialog(page).locator('input[type=file]');
+const search = page => page.locator('shop-camera-search');
+const cameraButton = page => page.getByRole('button', { name: 'Search by photo', exact: true });
+const input = page => search(page).locator('input[type=file]');
 
-async function denyCamera(page) {
-  await page.addInitScript(() => {
-    navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('Denied', 'NotAllowedError'); };
-  });
+async function capture(page, file) {
+  const chooser = page.waitForEvent('filechooser');
+  await cameraButton(page).click();
+  await (await chooser).setFiles(file);
 }
 
-async function openSearch(page) {
+test('camera icon directly invokes native capture without a popup, video stream or model request', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.cameraRequests = 0;
+    navigator.mediaDevices.getUserMedia = async () => { window.cameraRequests++; throw new Error('Unexpected video request'); };
+  });
+  const modelRequests = [];
+  page.on('request', request => { if (request.url().includes('/models/')) modelRequests.push(request.url()); });
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('#/catalog');
   await expect(page.getByText('Products: 9', { exact: true })).toBeVisible();
-  await searchButton(page).click();
-  await expect(dialog(page)).toBeVisible();
-}
-
-test('camera icon opens live search on the current page; close stops every camera track', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.addInitScript(() => {
-    window.cameraRequests = [];
-    const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-    navigator.mediaDevices.getUserMedia = async constraints => {
-      window.cameraRequests.push(constraints);
-      const stream = await original(constraints);
-      window.cameraTracks = stream.getTracks();
-      return stream;
-    };
-  });
-  await page.goto('#/catalog');
-  expect(await page.evaluate(() => window.cameraRequests.length)).toBe(0);
-  await expect(page.getByRole('link', { name: 'Recognition', exact: true })).toHaveCount(0);
-  await searchButton(page).click();
-  await expect(dialog(page).locator('video')).toBeVisible();
-  await expect(dialog(page).getByRole('status')).toHaveText('No pattern found yet. Move closer or try another angle.');
+  const chooser = page.waitForEvent('filechooser');
+  await cameraButton(page).click();
+  const nativeChooser = await chooser;
+  expect(nativeChooser.isMultiple()).toBe(false);
+  await expect(input(page)).toHaveAttribute('capture', 'environment');
+  await expect(input(page)).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp');
+  await expect(page.locator('dialog, video')).toHaveCount(0);
   await expect(page).toHaveURL(/#\/catalog$/);
-  expect(await page.evaluate(() => window.cameraRequests[0])).toEqual({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+  expect(await page.evaluate(() => window.cameraRequests)).toBe(0);
+  expect(modelRequests).toEqual([]);
+  // Cancelling the native picker leaves the catalog intact and permits another tap.
+  await nativeChooser.setFiles([]);
+  await expect(cameraButton(page)).toBeEnabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Close search', exact: true }).click();
-  await expect(dialog(page)).not.toBeVisible();
-  expect(await page.evaluate(() => window.cameraTracks.every(track => track.readyState === 'ended'))).toBe(true);
-  await expect(searchButton(page)).toBeFocused();
 });
 
-test('real live camera-frame inference opens the bag page automatically and releases the camera', async ({ page }, testInfo) => {
+test('a captured bag photo runs real ONNX inference and automatically opens the product', async ({ page }) => {
   const external = [];
   page.on('request', request => { if (request.url().startsWith('http') && !request.url().startsWith('http://127.0.0.1:4173/')) external.push(request.url()); });
-  // Supply the actual bag photo as a MediaStream. YOLO, WASM and texture checks stay real.
-  await page.addInitScript(() => {
-    navigator.mediaDevices.getUserMedia = async constraints => {
-      window.cameraConstraints = constraints;
-      const image = new Image();
-      image.src = new URL('assets/checker-bag.jpg', document.baseURI).href;
-      await image.decode();
-      const canvas = document.createElement('canvas');
-      canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
-      canvas.getContext('2d').drawImage(image, 0, 0);
-      const stream = canvas.captureStream(5);
-      window.cameraTracks = stream.getTracks();
-      window.cameraCanvas = canvas;
-      return stream;
-    };
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await openSearch(page);
+  await page.goto('#/catalog');
+  await capture(page, bag);
   await expect(page).toHaveURL(/#\/product\/checker-bag$/);
   await expect(page.getByRole('heading', { name: 'Checkerboard shoulder bag', exact: true })).toBeVisible();
-  await expect(dialog(page)).not.toBeVisible();
-  expect(await page.evaluate(() => window.cameraTracks.every(track => track.readyState === 'ended'))).toBe(true);
+  await expect(search(page).getByRole('status')).toHaveCount(0);
   expect(external).toEqual([]);
-  expect(await page.getByRole('img', { name: 'Checkerboard shoulder bag', exact: true }).evaluate(image => image.complete && image.naturalWidth === 960)).toBe(true);
-  await page.screenshot({ path: testInfo.outputPath('camera-product-match.png'), fullPage: true });
   await page.getByRole('button', { name: 'Add to cart', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Product added to cart.');
 });
 
-test('denied camera still allows an uploaded bag photo to open the catalog product', async ({ page }) => {
-  await denyCamera(page);
-  await openSearch(page);
-  await expect(dialog(page).getByRole('alert')).toHaveText('Could not open the camera. Allow access, or take and upload a photo.');
-  await expect(upload(page)).toHaveAttribute('capture', 'environment');
-  await upload(page).setInputFiles(bag);
-  await expect(page).toHaveURL(/#\/product\/checker-bag$/);
-  await expect(page.getByRole('heading', { name: 'Checkerboard shoulder bag', exact: true })).toBeVisible();
-});
-
-test('nonmatching and invalid photos stay in the dialog; the next matching photo opens the product', async ({ page }) => {
-  await denyCamera(page);
-  await openSearch(page);
-  await upload(page).setInputFiles({ name: 'invalid.png', mimeType: 'image/png', buffer: Buffer.from('not an image') });
-  await expect(dialog(page).getByRole('alert')).toHaveText('Could not process the photo. Choose another image or try again.');
-  await upload(page).setInputFiles('public/assets/backpack.jpg');
-  await expect(dialog(page).getByRole('status')).toHaveText('No pattern found. Take another photo or try a different angle.');
+test('nonmatching or invalid photos stay on the current page and can be replaced by another capture', async ({ page }) => {
+  await page.goto('#/catalog');
+  await capture(page, { name: 'invalid.png', mimeType: 'image/png', buffer: Buffer.from('not an image') });
+  await expect(search(page).getByRole('alert')).toHaveText('Could not process the photo. Choose another image or try again.');
+  await capture(page, 'public/assets/backpack.jpg');
+  await expect(search(page).getByRole('status')).toHaveText('No pattern found. Take another photo or try a different angle.');
   await expect(page).toHaveURL(/#\/catalog$/);
-  await expect(dialog(page).getByRole('alert')).toHaveCount(0);
-  await upload(page).setInputFiles(bag);
+  await expect(search(page).getByRole('alert')).toHaveCount(0);
+  await capture(page, bag);
   await expect(page).toHaveURL(/#\/product\/checker-bag$/);
 });
 
-test('model download failure can be retried with the same photo', async ({ page }) => {
-  await denyCamera(page);
+test('a failed model download can be retried with the same captured photo', async ({ page }) => {
   await page.route('**/models/*.onnx', route => route.abort());
-  await openSearch(page);
-  await upload(page).setInputFiles(bag);
-  await expect(dialog(page).getByRole('alert')).toHaveText('Could not process the photo. Choose another image or try again.');
+  await page.goto('#/catalog');
+  await capture(page, bag);
+  await expect(search(page).getByRole('alert')).toHaveText('Could not process the photo. Choose another image or try again.');
   await page.unroute('**/models/*.onnx');
-  await upload(page).setInputFiles(bag);
+  await capture(page, bag);
   await expect(page).toHaveURL(/#\/product\/checker-bag$/);
 });
 
-test('closing during a pending permission request disposes the late camera stream', async ({ page }) => {
-  await page.addInitScript(() => {
-    const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-    navigator.mediaDevices.getUserMedia = constraints => new Promise(resolve => {
-      window.finishCameraRequest = async () => {
-        const stream = await original(constraints);
-        window.lateTracks = stream.getTracks();
-        resolve(stream);
-      };
-    });
+test('cancelling processing discards its result and allows a fresh capture', async ({ page }) => {
+  let releaseDownload;
+  const gate = new Promise(resolve => { releaseDownload = resolve; });
+  let signalDownload;
+  const downloadStarted = new Promise(resolve => { signalDownload = resolve; });
+  await page.route('**/models/*.onnx', async route => {
+    signalDownload();
+    await gate;
+    await route.continue().catch(() => {});
   });
-  await openSearch(page);
-  await page.keyboard.press('Escape');
-  await expect(dialog(page)).not.toBeVisible();
-  await page.evaluate(() => window.finishCameraRequest());
-  await expect.poll(() => page.evaluate(() => window.lateTracks.every(track => track.readyState === 'ended'))).toBe(true);
+  await page.goto('#/catalog');
+  await capture(page, bag);
+  await downloadStarted;
+  await expect(cameraButton(page)).toBeDisabled();
+  await page.getByRole('button', { name: 'Cancel search', exact: true }).click();
+  releaseDownload();
+  await page.unroute('**/models/*.onnx');
+  await expect(cameraButton(page)).toBeEnabled();
+  await expect(search(page).getByRole('status')).toHaveCount(0);
   await expect(page).toHaveURL(/#\/catalog$/);
+  await capture(page, bag);
+  await expect(page).toHaveURL(/#\/product\/checker-bag$/);
 });
 
-test('a missing catalog product does not navigate to a broken product page', async ({ page }) => {
-  await denyCamera(page);
+test('navigation cancels pending photo processing without a later product redirect', async ({ page }) => {
+  let releaseDownload;
+  const gate = new Promise(resolve => { releaseDownload = resolve; });
+  let signalDownload;
+  const started = new Promise(resolve => { signalDownload = resolve; });
+  await page.route('**/models/*.onnx', async route => {
+    signalDownload();
+    await gate;
+    await route.continue().catch(() => {});
+  });
+  await page.goto('#/catalog');
+  await capture(page, bag);
+  await started;
+  await page.getByRole('link', { name: 'Cart (0)', exact: true }).click();
+  releaseDownload();
+  await page.unroute('**/models/*.onnx');
+  await expect(page).toHaveURL(/#\/cart$/);
+  await expect(cameraButton(page)).toBeEnabled();
+  await expect(search(page).getByRole('status')).toHaveCount(0);
+});
+
+test('a missing catalog product does not navigate to a broken page after capture', async ({ page }) => {
   await page.goto('#/catalog');
   await expect(page.getByText('Products: 9', { exact: true })).toBeVisible();
   await page.evaluate(() => new Promise((resolve, reject) => {
@@ -145,29 +131,7 @@ test('a missing catalog product does not navigate to a broken product page', asy
   }));
   await page.reload();
   await expect(page.getByText('Products: 8', { exact: true })).toBeVisible();
-  await searchButton(page).click();
-  await upload(page).setInputFiles(bag);
-  await expect(dialog(page).getByRole('alert')).toHaveText('This bag is currently unavailable in the catalog.');
+  await capture(page, bag);
+  await expect(search(page).getByRole('alert')).toHaveText('This bag is currently unavailable in the catalog.');
   await expect(page).toHaveURL(/#\/catalog$/);
-});
-
-test('backgrounding pauses camera search and navigation closes its dialog', async ({ page }) => {
-  await page.addInitScript(() => {
-    const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-    navigator.mediaDevices.getUserMedia = async constraints => {
-      const stream = await original(constraints);
-      window.cameraTracks = stream.getTracks();
-      return stream;
-    };
-  });
-  await openSearch(page);
-  await expect(dialog(page).locator('video')).toBeVisible();
-  await page.evaluate(() => {
-    Object.defineProperty(document, 'hidden', { value: true, configurable: true });
-    document.dispatchEvent(new Event('visibilitychange'));
-  });
-  await expect(dialog(page).getByRole('status')).toHaveText('Search paused. Enable the camera to continue.');
-  expect(await page.evaluate(() => window.cameraTracks.every(track => track.readyState === 'ended'))).toBe(true);
-  await page.evaluate(() => { location.hash = '#/cart'; });
-  await expect(dialog(page)).not.toBeVisible();
 });

@@ -19,6 +19,7 @@
             },
             "index": "src/index.html",
             "browser": "src/main.ts",
+            "styles": ["src/styles.css"],
             "webWorkerTsConfig": "tsconfig.worker.json",
             "tsConfig": "tsconfig.app.json",
             "baseHref": "./",

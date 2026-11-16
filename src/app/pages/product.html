@@ -4,22 +4,30 @@
   <p role="alert">{{ 'Не удалось открыть локальный каталог. Повторите попытку.' | t }}</p>
   <button type="button" (click)="store.loadProducts()">{{ 'Повторить' | t }}</button>
 } @else if (product(); as product) {
-  <a routerLink="/catalog">{{ 'Назад в каталог' | t }}</a>
+  <a class="back" routerLink="/catalog">← {{ 'Назад в каталог' | t }}</a>
   <article>
-    <img [src]="product.image" [alt]="product.name | t" width="480" height="400">
-    <section>
+    <div class="gallery">
+      <div class="image-toolbar"><span>{{ product.label | t }} / 01</span><button type="button" (click)="zoomed.set(!zoomed())" [attr.aria-pressed]="zoomed()" [attr.aria-label]="'Увеличить фото' | t">{{ zoomed() ? '−' : '+' }}</button></div>
+      <div class="product-image" [class.zoomed]="zoomed()"><img [src]="product.image" [alt]="product.name | t" width="700" height="840"></div>
+    </div>
+    <section class="product-info">
+      <p class="eyebrow">FARTOVIY / {{ product.label | t }}</p>
       <h1>{{ product.name | t }}</h1>
-      <p>{{ product.description | t }}</p>
-      <p><strong>{{ store.money(product.price) }}</strong></p>
-      <label for="product-size">{{ 'Размер' | t }}</label>
-      <select id="product-size" [value]="size()" (change)="selectSize($event)">
+      <p class="price">{{ store.money(product.price) }}</p>
+      <p class="description">{{ product.description | t }}</p>
+      <fieldset class="sizes"><legend>{{ 'Размер' | t }}</legend>
         @for (value of product.sizes; track value) {
-          <option [value]="value">{{ value | t }}</option>
+          <label [class.selected]="size() === value"><input type="radio" name="product-size" [value]="value" [checked]="size() === value" (change)="selectSize(value)"><span>{{ value | t }}</span></label>
         }
-      </select>
-      <button type="button" (click)="add()" [disabled]="store.submittingOrder()">{{ 'Добавить в корзину' | t }}</button>
+      </fieldset>
+      <button class="add" type="button" (click)="add()" [disabled]="store.submittingOrder()">{{ 'Добавить в корзину' | t }} <span aria-hidden="true">↗</span></button>
       <p class="message" role="status">{{ message() | t }}</p>
-      <a routerLink="/cart">{{ 'Перейти в корзину' | t }}</a>
+      <a class="cart-link" routerLink="/cart">{{ 'Перейти в корзину' | t }} <span aria-hidden="true">→</span></a>
+      <div class="details">
+        <details><summary>{{ 'Детали' | t }}<span aria-hidden="true">+</span></summary><p>{{ product.description | t }}</p><p>{{ 'Артикул' | t }}: {{ product.id }}</p></details>
+        <details><summary>{{ 'Размеры' | t }}<span aria-hidden="true">+</span></summary><p>{{ 'Доступные размеры' | t }}: @for (value of product.sizes; track value; let last = $last) { {{ value | t }}{{ last ? '' : ' / ' }} }</p></details>
+        <details><summary>{{ 'О заказе' | t }}<span aria-hidden="true">+</span></summary><p>{{ 'Заказ сохранится только на этом устройстве. Для передачи продавцу его нужно будет скопировать и отправить самостоятельно.' | t }}</p></details>
+      </div>
     </section>
   </article>
 } @else {

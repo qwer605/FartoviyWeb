@@ -1,18 +1,27 @@
 <header>
-  <span>FARTOVIY</span>
+  <a class="wordmark" routerLink="/home" aria-label="FARTOVIY">FARTOVIY<span aria-hidden="true">*</span></a>
   <nav [attr.aria-label]="'Навигация' | t">
     <a routerLink="/catalog" routerLinkActive="active">{{ 'Каталог' | t }}</a>
-    <a routerLink="/cart" routerLinkActive="active">{{ 'Корзина' | t }} ({{ store.count() }})</a>
-    <a routerLink="/orders" routerLinkActive="active">{{ 'Мои заказы' | t }}</a>
+    <a routerLink="/home" fragment="lookbook">{{ 'Лукбук' | t }}</a>
+    <a routerLink="/home" fragment="about">{{ 'О нас' | t }}</a>
   </nav>
-  <shop-camera-search />
-  <label>
-    {{ 'Язык' | t }}
+  <div class="tools">
+    <shop-camera-search />
+    <a class="bag-link" routerLink="/cart" routerLinkActive="active">{{ 'Корзина' | t }} ({{ store.count() }})</a>
+    <label>
+    <span class="sr-only">{{ 'Язык' | t }}</span>
     <select [value]="i18n.language()" (change)="i18n.setLanguage($event)" [attr.aria-label]="'Язык' | t">
       <option value="en">EN</option>
       <option value="ru">RU</option>
       <option value="uk">УКР</option>
     </select>
-  </label>
+    </label>
+  </div>
 </header>
 <main><router-outlet /></main>
+<footer>
+  <a class="wordmark" routerLink="/home" aria-label="FARTOVIY">FARTOVIY<span aria-hidden="true">*</span></a>
+  <p>{{ 'Вещи с характером. Каждый день.' | t }}</p>
+  <div><a routerLink="/orders">{{ 'Мои заказы' | t }}</a><a routerLink="/catalog">{{ 'Каталог' | t }}</a></div>
+  <span class="edition">© FARTOVIY · 2026</span>
+</footer>

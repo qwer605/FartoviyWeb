@@ -4,7 +4,8 @@ import { ProductPage } from './pages/product';
 import { CartPage } from './pages/cart';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'catalog' },
+  { path: '', pathMatch: 'full', redirectTo: 'home' },
+  { path: 'home', loadComponent: () => import('./pages/home').then(module => module.HomePage) },
   { path: 'catalog', component: CatalogPage },
   { path: 'product/:id', component: ProductPage },
   { path: 'cart', component: CartPage },

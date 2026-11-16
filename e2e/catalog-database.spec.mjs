@@ -35,7 +35,7 @@ test('reads persisted edits in the catalog, product page and cart after reload',
   await page.getByRole('heading', { name: 'Local Red Runner', exact: true }).getByRole('link').click();
   await expect(page.getByRole('heading', { name: 'Local Red Runner', exact: true })).toBeVisible();
   await expect(page.getByText('1,234 units', { exact: true })).toBeVisible();
-  await page.getByRole('combobox', { name: 'Size', exact: true }).selectOption('38');
+  await page.getByRole('radio', { name: '38', exact: true }).check();
   await page.getByRole('button', { name: 'Add to cart', exact: true }).click();
   await page.getByRole('link', { name: 'Go to cart', exact: true }).click();
   await page.reload();

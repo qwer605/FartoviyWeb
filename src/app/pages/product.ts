@@ -18,17 +18,19 @@ export class ProductPage {
   readonly product = computed(() => this.store.product(this.params().get('id') ?? ''));
   readonly size = signal('');
   readonly message = signal('');
+  readonly zoomed = signal(false);
 
   constructor() {
     effect(() => {
       const product = this.product();
       this.size.set(product?.sizes[0] ?? '');
       this.message.set('');
+      this.zoomed.set(false);
     });
   }
 
-  selectSize(event: Event): void {
-    this.size.set((event.target as HTMLSelectElement).value);
+  selectSize(value: string): void {
+    this.size.set(value);
     this.message.set('');
   }
 

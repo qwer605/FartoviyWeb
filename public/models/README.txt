@@ -21,10 +21,12 @@ Photos stay on the user's device.
 
 The default pattern mode checks up to eight deduplicated handbag/backpack/suitcase/tie
 mask proposals. "tie" is included because some side-view bags are misclassified as ties.
-Source class labels remain unchanged. The geometric checker-texture verifier runs
-only inside a proposal mask; a match is not a bag/brand/SKU/authenticity classifier.
+Source class labels remain unchanged. Camera search uses the local light/dark region
+graph verifier (color-regions.ts), restricted to a proposal mask. A match opens the
+configured checker-bag catalog product; this is a routing rule, not SKU recognition.
+The original geometric checker-texture verifier remains available in code and tests.
 Different textures may match; missing proposals cannot be recovered by stage two.
-Confidence and texture coverage are separate quantities and are labeled separately.
+Confidence and texture coverage are separate quantities; neither identifies a brand.
 
 Demo image (public/assets/vision-sample.jpg):
 https://github.com/ultralytics/ultralytics/blob/main/ultralytics/assets/bus.jpg

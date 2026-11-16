@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import type { ImageGeometry } from './vision';
-import type { RecognitionResult, RecognitionPhase, RecognitionMode } from './bag-pattern';
+import type { RecognitionResult, RecognitionPhase, RecognitionMode, PatternMethod } from './bag-pattern';
 
 @Injectable({ providedIn: 'root' })
 export class Detector implements OnDestroy {
@@ -8,7 +8,7 @@ export class Detector implements OnDestroy {
   private cancel?: () => void;
 
   detect(pixels: Uint8ClampedArray, geometry: ImageGeometry, progress: (phase: RecognitionPhase) => void,
-    threshold = .25, mode: RecognitionMode = 'objects'): Promise<RecognitionResult> {
+    threshold = .25, mode: RecognitionMode = 'objects', patternMethod: PatternMethod = 'grid'): Promise<RecognitionResult> {
     if (this.cancel) return Promise.reject(new Error('Detection is already running'));
     this.worker ??= new Worker(new URL('./detector.worker', import.meta.url), { type: 'module' });
     const worker = this.worker;
@@ -24,7 +24,7 @@ export class Detector implements OnDestroy {
         else { finish(); resolve(data.result); }
       };
       try {
-        worker.postMessage({ pixels: pixels.buffer, geometry, baseUrl: document.baseURI, threshold, mode }, [pixels.buffer as ArrayBuffer]);
+        worker.postMessage({ pixels: pixels.buffer, geometry, baseUrl: document.baseURI, threshold, mode, patternMethod }, [pixels.buffer as ArrayBuffer]);
       } catch (error) { fail(error instanceof Error ? error.message : String(error)); }
     });
   }

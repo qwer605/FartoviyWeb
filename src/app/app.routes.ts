@@ -11,6 +11,6 @@ export const routes: Routes = [
   { path: 'checkout', loadComponent: () => import('./pages/checkout').then(module => module.CheckoutPage) },
   { path: 'orders', loadComponent: () => import('./pages/orders').then(module => module.OrdersPage) },
   { path: 'orders/:id', loadComponent: () => import('./pages/order').then(module => module.OrderPage) },
-  { path: 'recognize', loadComponent: () => import('./pages/recognize').then(module => module.RecognizePage) },
+  { path: 'recognize', redirectTo: 'catalog', pathMatch: 'full' },
   { path: '**', redirectTo: 'catalog' }
 ];

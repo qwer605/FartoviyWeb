@@ -3,11 +3,11 @@ import * as ort from 'onnxruntime-web/wasm';
 import { decodeSegments, INPUT_SIZE, rgbaToTensor } from './vision';
 import type { ImageGeometry } from './vision';
 import { checkBagPattern, patternCandidates } from './bag-pattern';
-import type { RecognitionMode } from './bag-pattern';
+import type { RecognitionMode, PatternMethod } from './bag-pattern';
 
 let session: Promise<ort.InferenceSession> | undefined;
 
-addEventListener('message', async ({ data }: MessageEvent<{ pixels: ArrayBuffer; geometry: ImageGeometry; baseUrl: string; threshold: number; mode: RecognitionMode }>) => {
+addEventListener('message', async ({ data }: MessageEvent<{ pixels: ArrayBuffer; geometry: ImageGeometry; baseUrl: string; threshold: number; mode: RecognitionMode; patternMethod?: PatternMethod }>) => {
   let input: ort.Tensor | undefined;
   let outputs: ort.InferenceSession.ReturnType | undefined;
   try {
@@ -28,7 +28,7 @@ addEventListener('message', async ({ data }: MessageEvent<{ pixels: ArrayBuffer;
     const candidates = [];
     if (data.mode === 'pattern') {
       postMessage({ phase: 'texture' });
-      for (const detection of patternCandidates(detections)) candidates.push(checkBagPattern(new Uint8ClampedArray(data.pixels), data.geometry, detection));
+      for (const detection of patternCandidates(detections)) candidates.push(checkBagPattern(new Uint8ClampedArray(data.pixels), data.geometry, detection, data.patternMethod));
     }
     const buffers = detections.map(detection => detection.mask.data.buffer as ArrayBuffer);
     for (const candidate of candidates) buffers.push(candidate.texture.mask.buffer as ArrayBuffer);

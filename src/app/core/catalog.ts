@@ -9,6 +9,18 @@ export interface Product {
   description: string;
 }
 
+export const CHECKER_BAG_ID = 'checker-bag';
+export const checkerBag: Product = {
+  id: CHECKER_BAG_ID,
+  name: 'Сумка в шахматную клетку',
+  category: 'accessories',
+  label: 'Сумки',
+  price: 3490,
+  image: 'assets/checker-bag.jpg',
+  sizes: ['Единый'],
+  description: 'Светлая сумка с тёмным шахматным узором, регулируемым ремнём и бежевой отделкой.'
+};
+
 export const products: Product[] = [
   {
     "id": "runner",
@@ -128,5 +140,6 @@ export const products: Product[] = [
       "Единый"
     ],
     "description": "Маленькая сумка для важных мелочей. Компактная форма, аккуратная фурнитура и характер, который завершает образ."
-  }
+  },
+  checkerBag
 ];

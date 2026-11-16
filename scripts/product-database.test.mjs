@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { IDBFactory } from 'fake-indexeddb';
-import { products } from '../src/app/core/catalog.ts';
+import { products, checkerBag, CHECKER_BAG_ID } from '../src/app/core/catalog.ts';
 import { ProductDatabase } from '../src/app/core/product-database.ts';
 
 test('creates a catalog from the initial products and supports reads by ID', async t => {
@@ -66,4 +66,47 @@ test('recovers after database access is temporarily denied', async t => {
   await assert.rejects(database.list(), /Storage denied/);
   denied = false;
   assert.equal((await database.list()).length, products.length);
+});
+
+async function createVersionTwo(factory, records) {
+  return new Promise((resolve, reject) => {
+    const request = factory.open('fartoviy-products', 2);
+    request.onupgradeneeded = () => {
+      const store = request.result.createObjectStore('products', { keyPath: 'id' });
+      store.createIndex('category', 'category');
+      records.forEach(record => store.add(record));
+      const orders = request.result.createObjectStore('orders', { keyPath: 'id' });
+      orders.createIndex('createdAt', 'createdAt');
+      orders.add({ id: 'saved-order', createdAt: '2026-11-01T10:00:00Z', total: 1234 });
+    };
+    request.onsuccess = () => { request.result.close(); resolve(); };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+test('v3 adds the camera-search bag once while preserving edited products, deletions and orders', async t => {
+  const factory = new IDBFactory();
+  await createVersionTwo(factory, [{ ...products[0], price: 1234, name: 'Local product' }]);
+  const database = new ProductDatabase(products, factory);
+  assert.deepEqual(await database.get(CHECKER_BAG_ID), checkerBag);
+  assert.equal((await database.get('runner')).price, 1234);
+  assert.equal((await database.get('runner')).name, 'Local product');
+  assert.equal(await database.get('mini'), undefined);
+  assert.equal((await database.list()).length, 2);
+  assert.equal((await database.listOrders())[0].id, 'saved-order');
+  await database.remove(CHECKER_BAG_ID);
+  database.close();
+  const reopened = new ProductDatabase(products, factory);
+  t.after(() => reopened.close());
+  assert.equal(await reopened.get(CHECKER_BAG_ID), undefined);
+});
+
+test('v3 preserves an existing camera-search product instead of overwriting local fields', async t => {
+  const factory = new IDBFactory();
+  await createVersionTwo(factory, [{ ...checkerBag, price: 999, name: 'My bag' }]);
+  const database = new ProductDatabase(products, factory);
+  t.after(() => database.close());
+  assert.equal((await database.get(CHECKER_BAG_ID)).price, 999);
+  assert.equal((await database.get(CHECKER_BAG_ID)).name, 'My bag');
+  assert.equal((await database.list()).length, 1);
 });

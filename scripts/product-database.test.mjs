@@ -162,11 +162,18 @@ test('v6 adds descriptions and the Galliera name to the existing catalog while p
   assert.equal((await database.getOrder('saved-order')).total, 1234);
 });
 
-test('v7 adds the Galliera inspiration to the existing catalog record', async t => {
-  const factory = new IDBFactory();
-  const savedBag = { ...checkerBag, inspiration: undefined, price: 3500 };
-  await createExistingDatabase(factory, 6, [savedBag]);
-  const database = new ProductDatabase(products, factory);
-  t.after(() => database.close());
-  assert.deepEqual(await database.get(CHECKER_BAG_ID), { ...checkerBag, price: 3500 });
+test('v8 updates the default Galliera inspiration and preserves a local edit', async t => {
+  const cases = [
+    { version: 6, previous: undefined, expected: checkerBag.inspiration },
+    { version: 7, previous: '«Сплетница»', expected: checkerBag.inspiration },
+    { version: 7, previous: 'My own reference', expected: 'My own reference' }
+  ];
+  for (const { version, previous, expected } of cases) {
+    const factory = new IDBFactory();
+    const savedBag = { ...checkerBag, inspiration: previous, price: 3500 };
+    await createExistingDatabase(factory, version, [savedBag]);
+    const database = new ProductDatabase(products, factory);
+    t.after(() => database.close());
+    assert.deepEqual(await database.get(CHECKER_BAG_ID), { ...savedBag, inspiration: expected });
+  }
 });

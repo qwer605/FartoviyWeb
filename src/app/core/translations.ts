@@ -2,7 +2,6 @@ import type { Language } from './language';
 
 export const english = {
   "Вдохновение": "Inspiration",
-  "«Сплетница»": "“Gossip Girl”",
   "Киноотсылка": "Screen reference",
   "Плечевая сумка с мягким силуэтом хобо, светлой шахматной канвой Damier Azur и отделкой из кожи натурального оттенка. Регулируемый ремень крепится на металлических кольцах, а спереди закреплена табличка Louis Vuitton Inventeur. Модель Galliera появилась в линейке Louis Vuitton в 2008 году.": "A soft hobo shoulder bag in pale Damier Azur checkerboard canvas with natural-toned leather trim. Metal rings secure the adjustable strap, and a Louis Vuitton Inventeur plaque sits on the front. Galliera joined the Louis Vuitton line in 2008.",
   "Мягкая сумка из тёмно-синего денима с карамельной отделкой и прошитым логотипом Chloé у основания. Изогнутая молния повторяет линию верха, а тонкая ручка поддерживает округлый силуэт.": "A soft indigo denim bag with caramel-toned trim and a stitched Chloé logo at the base. The curved zipper follows the top edge, while a slim handle complements the rounded shape.",
@@ -209,7 +208,6 @@ export const english = {
 
 export const ukrainian: Record<keyof typeof english, string> = {
   "Вдохновение": "Натхнення",
-  "«Сплетница»": "«Пліткарка»",
   "Киноотсылка": "Кіновідсилання",
   "Плечевая сумка с мягким силуэтом хобо, светлой шахматной канвой Damier Azur и отделкой из кожи натурального оттенка. Регулируемый ремень крепится на металлических кольцах, а спереди закреплена табличка Louis Vuitton Inventeur. Модель Galliera появилась в линейке Louis Vuitton в 2008 году.": "М’яка плечова сумка силуету хобо зі світлої картатої канви Damier Azur та оздобленням зі шкіри натурального відтінку. Регульований ремінь кріпиться на металевих кільцях, а спереду закріплена табличка Louis Vuitton Inventeur. Модель Galliera з’явилася в лінійці Louis Vuitton у 2008 році.",
   "Мягкая сумка из тёмно-синего денима с карамельной отделкой и прошитым логотипом Chloé у основания. Изогнутая молния повторяет линию верха, а тонкая ручка поддерживает округлый силуэт.": "М’яка сумка з темно-синього деніму з карамельним оздобленням і простроченим логотипом Chloé біля основи. Вигнута блискавка повторює лінію верху, а тонка ручка доповнює округлий силует.",

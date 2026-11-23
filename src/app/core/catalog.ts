@@ -23,7 +23,7 @@ export const checkerBag: Product = {
   label: 'Сумки',
   price: 3490,
   currency: 'EUR',
-  inspiration: '«Сплетница»',
+  inspiration: '“Secret life of YVES LIND”',
   image: 'assets/checker-bag.jpg',
   sizes: ['Единый'],
   description: 'Плечевая сумка с мягким силуэтом хобо, светлой шахматной канвой Damier Azur и отделкой из кожи натурального оттенка. Регулируемый ремень крепится на металлических кольцах, а спереди закреплена табличка Louis Vuitton Inventeur. Модель Galliera появилась в линейке Louis Vuitton в 2008 году.'

@@ -11,7 +11,7 @@ test('opens Home by default and links to Catalog and the combined About and Look
   await expect(featuredBag.getByRole('heading')).toHaveText('Louis Vuitton Galliera Damier Azur');
   await expect(featuredBag.locator('.description')).toContainText('Damier Azur checkerboard canvas');
   await expect(featuredBag.getByText('€3,490', { exact: true })).toBeVisible();
-  await expect(featuredBag.getByText('Inspiration · “Gossip Girl”', { exact: true })).toBeVisible();
+  await expect(featuredBag.getByText('Inspiration · “Secret life of YVES LIND”', { exact: true })).toBeVisible();
   await expect(page.locator('.featured-grid').getByText('Screen reference · “Friends” 1998', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('home-desktop.png'), fullPage: true });
 
@@ -44,7 +44,7 @@ test('opens Home by default and links to Catalog and the combined About and Look
   await expect(page.locator('.products').getByText('Screen reference · “Friends” 1998', { exact: true })).toBeVisible();
   const bag = page.getByRole('heading', { name: 'Louis Vuitton Galliera Damier Azur', exact: true });
   await expect(bag.getByRole('link')).toHaveAttribute('href', '#/product/checker-bag');
-  await expect(page.locator('.products').getByText('Inspiration · “Gossip Girl”', { exact: true })).toBeVisible();
+  await expect(page.locator('.products').getByText('Inspiration · “Secret life of YVES LIND”', { exact: true })).toBeVisible();
   await page.reload();
   await expect(categories.getByRole('link', { name: /Accessories/ })).toHaveAttribute('aria-current', 'page');
   await categories.getByRole('link', { name: /All pieces/ }).click();
@@ -91,7 +91,7 @@ test('mobile design retains native capture, category filters, sizing and product
   await page.screenshot({ path: testInfo.outputPath('bag-mobile.png'), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('combobox', { name: 'Language', exact: true }).selectOption('ru');
-  await expect(page.locator('.product-info .screen-reference')).toHaveText('Вдохновение «Сплетница»');
+  await expect(page.locator('.product-info .screen-reference')).toHaveText('Вдохновение “Secret life of YVES LIND”');
   await expect(page.locator('.product-info .description')).toContainText('Плечевая сумка с мягким силуэтом хобо');
   await page.setViewportSize({ width: 320, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

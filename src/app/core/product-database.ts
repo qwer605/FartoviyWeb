@@ -4,7 +4,7 @@ import { buildOrder, validateOrderDraft } from './order';
 import type { Order, OrderDraft } from './order';
 
 export const PRODUCT_DATABASE_NAME = 'fartoviy-products';
-const VERSION = 7;
+const VERSION = 8;
 const STORE = 'products';
 const archiveIds = new Set(archiveProducts.map(product => product.id));
 
@@ -142,7 +142,7 @@ export class ProductDatabase {
               existing.onsuccess = () => { if (existing.result === undefined) store.add(product); };
             }
           }
-          if (event.oldVersion > 0 && event.oldVersion < 7) {
+          if (event.oldVersion > 0 && event.oldVersion < 8) {
             const store = request.transaction!.objectStore(STORE);
             const needsDescriptions = event.oldVersion < 6;
             for (const product of this.seed) {
@@ -152,7 +152,9 @@ export class ProductDatabase {
               existing.onsuccess = () => {
                 const saved = existing.result as Product | undefined;
                 if (!saved) return;
-                if (isCheckerBag && product.inspiration) saved.inspiration ??= product.inspiration;
+                if (isCheckerBag && product.inspiration && (saved.inspiration === undefined || saved.inspiration === '«Сплетница»')) {
+                  saved.inspiration = product.inspiration;
+                }
                 if (needsDescriptions) {
                   if (isCheckerBag) {
                     saved.currency ??= 'EUR';

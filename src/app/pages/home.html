@@ -1,16 +1,23 @@
-<section class="hero" aria-label="FARTOVIY">
-  <div class="hero-image"><img src="assets/campaign-burgundy.png" alt="" width="1536" height="1024" fetchpriority="high"></div>
-  <h1>FARTOVIY<span>*</span></h1>
-  <p class="hero-caption">{{ 'Для города.' | t }}<br>{{ 'Для движения.' | t }}<br>{{ 'Для себя.' | t }}</p>
-  <div class="hero-edition"><span>F/W 26</span><br>{{ 'Свободный ритм' | t }}<br><span class="arrow">↘</span></div>
-  <a class="shop-button" routerLink="/catalog">{{ 'Смотреть коллекцию' | t }} <span aria-hidden="true">↗</span></a>
-  <span class="hero-index">01 <i>/</i> FARTOVIY EDIT</span>
+<section class="hero">
+  <div class="hero-copy">
+    <h1 class="archive-logo"><img src="assets/new/web%20changes/photo_2026-11-23_12-18-56.jpg" alt="Cult Archive" width="938" height="382"></h1>
+    <a class="shop-button" routerLink="/catalog">{{ 'Смотреть коллекцию' | t }}</a>
+  </div>
+  @if (heroProduct(); as product) {
+    <a class="hero-image" [routerLink]="['/product', product.id]">
+      <img [src]="product.image" [alt]="product.name | t" width="480" height="560" fetchpriority="high">
+    </a>
+  }
 </section>
 
 <section class="selection">
-  <div class="section-heading"><h2>{{ 'В фокусе' | t }}</h2><a routerLink="/catalog">{{ 'Смотреть всё' | t }} <span aria-hidden="true">↗</span></a></div>
-  @if (store.loading()) { <p role="status">{{ 'Загрузка товаров…' | t }}</p> }
-  @else if (store.loadError()) {
+  <div class="section-heading">
+    <h2>{{ 'В фокусе' | t }}</h2>
+    <a routerLink="/catalog">{{ 'Смотреть всё' | t }}</a>
+  </div>
+  @if (store.loading()) {
+    <p role="status">{{ 'Загрузка товаров…' | t }}</p>
+  } @else if (store.loadError()) {
     <p role="alert">{{ 'Не удалось открыть локальный каталог. Повторите попытку.' | t }}</p>
     <button type="button" (click)="store.loadProducts()">{{ 'Повторить' | t }}</button>
   } @else {
@@ -20,10 +27,3 @@
     </div>
   }
 </section>
-
-<section class="lookbook" id="lookbook">
-  <div class="lookbook-photo"><img src="assets/campaign-burgundy.png" alt="" width="1536" height="1024" loading="lazy"><span>THE EVERYDAY EDIT / 26</span></div>
-  <div class="lookbook-copy"><p class="eyebrow">{{ 'Лукбук' | t }} / 01</p><h2>{{ 'Меньше правил.' | t }}<br><em>{{ 'Больше тебя.' | t }}</em></h2><p>{{ 'Свободные силуэты, спокойные оттенки и детали, которые меняют всё. Собери свой повседневный образ.' | t }}</p><a routerLink="/catalog" [queryParams]="{ category: 'clothing' }">{{ 'Выбрать одежду' | t }} <span aria-hidden="true">↗</span></a></div>
-</section>
-
-<section class="about" id="about"><span class="asterisk" aria-hidden="true">*</span><div><p class="eyebrow">{{ 'О нас' | t }}</p><h2>{{ 'Характер — в деталях.' | t }}</h2><p>{{ 'FARTOVIY — одежда и аксессуары для твоего ритма. От любимого худи до сумки, которая завершает образ.' | t }}</p></div><a routerLink="/catalog" [queryParams]="{ category: 'accessories' }">{{ 'Найти свою деталь' | t }} <span aria-hidden="true">↗</span></a></section>

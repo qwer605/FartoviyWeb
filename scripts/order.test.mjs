@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { IDBFactory } from 'fake-indexeddb';
-import { products } from '../src/app/core/catalog.ts';
+import { archiveProducts, products } from '../src/app/core/catalog.ts';
 import { buildOrder, cartFingerprint, OrderError } from '../src/app/core/order.ts';
 import { ProductDatabase } from '../src/app/core/product-database.ts';
 
@@ -39,6 +39,19 @@ test('requires explicit reconfirmation when a price, product or size changes', (
   assert.throws(() => buildOrder(draft(), []), /CATALOG_CHANGED/);
   assert.throws(() => buildOrder(draft(), [{ ...products[0], price: 7000 }]), /CATALOG_CHANGED/);
   assert.throws(() => buildOrder(draft(), [{ ...products[0], sizes: ['40'] }]), /CATALOG_CHANGED/);
+  assert.throws(() => buildOrder(draft(), [{ ...products[0], currency: 'EUR' }]), /CATALOG_CHANGED/);
+});
+
+test('snapshots euro prices separately from legacy order amounts', () => {
+  const [product] = archiveProducts;
+  const item = { id: product.id, size: product.sizes[0], qty: 2, expectedPrice: product.price, expectedCurrency: 'EUR' };
+  const request = draft();
+  const euroOrder = buildOrder({ ...request, items: [item] }, products);
+  assert.equal(euroOrder.items[0].currency, 'EUR');
+  assert.equal(euroOrder.total, 8600);
+  const mixedOrder = buildOrder({ ...request, items: [...request.items, item] }, products);
+  assert.equal(mixedOrder.total, null);
+  assert.deepEqual(mixedOrder.items.map(line => [line.currency, line.total]), [[undefined, 12980], ['EUR', 8600]]);
 });
 
 test('persists an immutable order snapshot after products are edited or removed', async t => {
@@ -93,7 +106,7 @@ test('upgrades the existing v1 catalog without replacing user changes', async t 
   });
   const database = new ProductDatabase(products, factory);
   t.after(() => database.close());
-  assert.equal((await database.list()).length, 2);
+  assert.equal((await database.list()).length, archiveProducts.length + 2);
   assert.equal((await database.get('runner')).price, 1234);
   assert.deepEqual(await database.listOrders(), []);
   const request = draft(); request.items[0].expectedPrice = 1234;

@@ -7,25 +7,46 @@
   <a class="back" routerLink="/catalog">← {{ 'Назад в каталог' | t }}</a>
   <article>
     <div class="gallery">
-      <div class="image-toolbar"><span>{{ product.label | t }} / 01</span><button type="button" (click)="zoomed.set(!zoomed())" [attr.aria-pressed]="zoomed()" [attr.aria-label]="'Увеличить фото' | t">{{ zoomed() ? '−' : '+' }}</button></div>
-      <div class="product-image" [class.zoomed]="zoomed()"><img [src]="product.image" [alt]="product.name | t" width="700" height="840"></div>
+      <div class="image-toolbar"><button type="button" (click)="zoomed.set(!zoomed())" [attr.aria-pressed]="zoomed()" [attr.aria-label]="'Увеличить фото' | t">{{ zoomed() ? '−' : '+' }}</button></div>
+      <div class="product-image" [class.zoomed]="zoomed()"><img [src]="photos()[photoIndex()]" [alt]="product.name | t" width="700" height="840"></div>
+      @if (photos().length > 1) {
+        <div class="thumbnails" role="group" [attr.aria-label]="'Фотографии товара' | t">
+          @for (photo of photos(); track photo; let index = $index) {
+            <button type="button" (click)="selectPhoto(index)" [attr.aria-pressed]="photoIndex() === index" [attr.aria-label]="('Фото' | t) + ' ' + (index + 1)">
+              <img [src]="photo" alt="" width="72" height="72" loading="lazy">
+            </button>
+          }
+        </div>
+      }
     </div>
     <section class="product-info">
-      <p class="eyebrow">FARTOVIY / {{ product.label | t }}</p>
+      <p class="eyebrow">{{ product.label | t }}</p>
       <h1>{{ product.name | t }}</h1>
-      <p class="price">{{ store.money(product.price) }}</p>
-      <p class="description">{{ product.description | t }}</p>
-      <fieldset class="sizes"><legend>{{ 'Размер' | t }}</legend>
-        @for (value of product.sizes; track value) {
-          <label [class.selected]="size() === value"><input type="radio" name="product-size" [value]="value" [checked]="size() === value" (change)="selectSize(value)"><span>{{ value | t }}</span></label>
-        }
-      </fieldset>
+      <p class="price">{{ store.money(product.price, product.currency) }}</p>
+      @if (product.description) { <p class="description">{{ product.description | t }}</p> }
+      @if (product.source) {
+        <p class="screen-reference"><span>{{ 'Киноотсылка' | t }}</span> {{ product.source }}</p>
+      }
+      @if (product.inspiration) {
+        <p class="screen-reference"><span>{{ 'Вдохновение' | t }}</span> {{ product.inspiration | t }}</p>
+      }
+      @if (size() !== 'Размер не указан') {
+        <fieldset class="sizes"><legend>{{ 'Размер' | t }}</legend>
+          @for (value of product.sizes; track value) {
+            <label [class.selected]="size() === value"><input type="radio" name="product-size" [value]="value" [checked]="size() === value" (change)="selectSize(value)"><span>{{ value | t }}</span></label>
+          }
+        </fieldset>
+      } @else {
+        <p class="description">{{ size() | t }}</p>
+      }
       <button class="add" type="button" (click)="add()" [disabled]="store.submittingOrder()">{{ 'Добавить в корзину' | t }} <span aria-hidden="true">↗</span></button>
       <p class="message" role="status">{{ message() | t }}</p>
       <a class="cart-link" routerLink="/cart">{{ 'Перейти в корзину' | t }} <span aria-hidden="true">→</span></a>
       <div class="details">
-        <details><summary>{{ 'Детали' | t }}<span aria-hidden="true">+</span></summary><p>{{ product.description | t }}</p><p>{{ 'Артикул' | t }}: {{ product.id }}</p></details>
-        <details><summary>{{ 'Размеры' | t }}<span aria-hidden="true">+</span></summary><p>{{ 'Доступные размеры' | t }}: @for (value of product.sizes; track value; let last = $last) { {{ value | t }}{{ last ? '' : ' / ' }} }</p></details>
+        <details><summary>{{ 'Детали' | t }}<span aria-hidden="true">+</span></summary><p>{{ 'Артикул' | t }}: {{ product.id }}</p></details>
+        @if (size() !== 'Размер не указан') {
+          <details><summary>{{ 'Размеры' | t }}<span aria-hidden="true">+</span></summary><p>{{ 'Доступные размеры' | t }}: @for (value of product.sizes; track value; let last = $last) { {{ value | t }}{{ last ? '' : ' / ' }} }</p></details>
+        }
         <details><summary>{{ 'О заказе' | t }}<span aria-hidden="true">+</span></summary><p>{{ 'Заказ сохранится только на этом устройстве. Для передачи продавцу его нужно будет скопировать и отправить самостоятельно.' | t }}</p></details>
       </div>
     </section>

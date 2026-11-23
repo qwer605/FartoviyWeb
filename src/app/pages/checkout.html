@@ -17,12 +17,12 @@
           @if (store.product(item.id); as product) {
             <li><strong>{{ product.name | t }}</strong><br>
               {{ 'Размер' | t }}: {{ item.size | t }} · {{ 'Количество' | t }}: {{ item.qty }}<br>
-              {{ store.money(product.price) }} × {{ item.qty }} = {{ store.money(product.price * item.qty) }}
+              {{ store.money(product.price, product.currency) }} × {{ item.qty }} = {{ store.money(product.price * item.qty, product.currency) }}
             </li>
           }
         }
       </ul>
-      <p class="total"><strong>{{ 'Итого' | t }}: {{ store.money(store.total()) }}</strong></p>
+      <p class="total"><strong>{{ 'Итого' | t }}: {{ store.cartTotal() }}</strong></p>
       <a routerLink="/cart">{{ 'Изменить корзину' | t }}</a>
     </section>
     <form (submit)="submit($event)">

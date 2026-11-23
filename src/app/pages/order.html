@@ -13,11 +13,11 @@
       @for (item of order.items; track item.id + ':' + item.size) {
         <li><strong>{{ item.name | t }}</strong><br>
           {{ 'Размер' | t }}: {{ item.size | t }} · {{ 'Количество' | t }}: {{ item.qty }}<br>
-          {{ store.money(item.unitPrice) }} × {{ item.qty }} = {{ store.money(item.total) }}
+          {{ store.money(item.unitPrice, item.currency) }} × {{ item.qty }} = {{ store.money(item.total, item.currency) }}
         </li>
       }
     </ul>
-    <p class="total"><strong>{{ 'Итого' | t }}: {{ store.money(order.total) }}</strong></p>
+    <p class="total"><strong>{{ 'Итого' | t }}: {{ store.formatTotals(order.items) }}</strong></p>
   </section>
   <section [attr.aria-label]="'Контактные данные' | t">
     <h2>{{ 'Контактные данные' | t }}</h2>

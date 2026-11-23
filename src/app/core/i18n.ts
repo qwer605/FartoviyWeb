@@ -19,9 +19,9 @@ export class I18n {
   constructor() {
     effect(() => {
       document.documentElement.lang = this.language();
-      document.title = this.text('FARTOVIY — каталог');
+      document.title = this.text('Cult Archive — каталог');
       document.querySelector('meta[name="description"]')?.setAttribute('content',
-        this.text('Демо: каталог товаров, информация о товаре и корзина.'));
+        this.text('Cult Archive собирает винтажную одежду, обувь и аксессуары из кино и сериалов.'));
     });
   }
 

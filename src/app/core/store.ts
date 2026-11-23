@@ -1,5 +1,6 @@
 import { Injectable, OnDestroy, computed, effect, inject, signal } from '@angular/core';
-import { Product, products as initialProducts } from './catalog';
+import { collectionProducts, legacyProductIds, products as initialProducts } from './catalog';
+import type { Currency, Product } from './catalog';
 import { I18n, readStorage, writeStorage } from './i18n';
 import { ProductDatabase } from './product-database';
 import { cartFingerprint, OrderError } from './order';
@@ -7,12 +8,17 @@ import type { Customer, Order } from './order';
 
 export interface CartItem { id: string; size: string; qty: number; }
 
+const collectionOrder = new Map(collectionProducts.map((product, position) => [product.id, position]));
+
 @Injectable({ providedIn: 'root' })
 export class Store implements OnDestroy {
   readonly i18n = inject(I18n);
   private readonly database = new ProductDatabase(initialProducts);
   private readonly productList = signal<Product[]>([]);
   readonly products = this.productList.asReadonly();
+  readonly collection = computed(() => this.products()
+    .filter(product => !legacyProductIds.has(product.id))
+    .sort((a, b) => (collectionOrder.get(a.id) ?? collectionOrder.size) - (collectionOrder.get(b.id) ?? collectionOrder.size)));
   readonly loading = signal(true);
   readonly loadError = signal(false);
   readonly cart = signal<CartItem[]>([]);
@@ -20,7 +26,10 @@ export class Store implements OnDestroy {
   private loadInProgress = false;
   private hasLoadedProducts = false;
   readonly count = computed(() => this.cart().reduce((total, item) => total + item.qty, 0));
-  readonly total = computed(() => this.cart().reduce((total, item) => total + (this.product(item.id)?.price ?? 0) * item.qty, 0));
+  readonly cartTotal = computed(() => this.formatTotals(this.cart().flatMap(item => {
+    const product = this.product(item.id);
+    return product ? [{ total: product.price * item.qty, currency: product.currency }] : [];
+  })));
 
   constructor() {
     effect(() => {
@@ -52,9 +61,20 @@ export class Store implements OnDestroy {
     return this.products().find(product => product.id === id);
   }
 
-  money(amount: number): string {
+  money(amount: number, currency?: Currency): string {
     const language = this.i18n.language();
+    if (currency) {
+      return new Intl.NumberFormat(language, { style: 'currency', currency, minimumFractionDigits: 0 }).format(amount);
+    }
     return new Intl.NumberFormat(language).format(amount) + ' ' + this.i18n.text('у.е.');
+  }
+
+  formatTotals(items: readonly { total: number; currency?: Currency }[]): string {
+    const totals = new Map<Currency | undefined, number>();
+    for (const { total, currency } of items) {
+      totals.set(currency, (totals.get(currency) ?? 0) + Math.round(total * 100));
+    }
+    return Array.from(totals, ([currency, cents]) => this.money(cents / 100, currency)).join(' + ');
   }
 
   add(product: Product, size: string): boolean {
@@ -89,7 +109,7 @@ export class Store implements OnDestroy {
       const items = this.cart().map(item => {
         const product = this.product(item.id);
         if (!product) throw new OrderError('CATALOG_CHANGED');
-        return { ...item, expectedPrice: product.price };
+        return { ...item, expectedPrice: product.price, expectedCurrency: product.currency };
       });
       const fingerprint = cartFingerprint(items);
       const saved = readStorage('fartoviy-checkout-attempt') as { id?: unknown; fingerprint?: unknown } | null;

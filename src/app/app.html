@@ -1,27 +1,50 @@
 <header>
-  <a class="wordmark" routerLink="/home" aria-label="FARTOVIY">FARTOVIY<span aria-hidden="true">*</span></a>
+  <a class="wordmark archive-logo" routerLink="/home">
+    <img src="assets/new/web%20changes/photo_2026-11-23_12-18-56.jpg" alt="Cult Archive" width="938" height="382">
+  </a>
   <nav [attr.aria-label]="'Навигация' | t">
-    <a routerLink="/catalog" routerLinkActive="active">{{ 'Каталог' | t }}</a>
-    <a routerLink="/home" fragment="lookbook">{{ 'Лукбук' | t }}</a>
-    <a routerLink="/home" fragment="about">{{ 'О нас' | t }}</a>
+    <a routerLink="/catalog" routerLinkActive="active" ariaCurrentWhenActive="page">{{ 'Каталог' | t }}</a>
+    <a routerLink="/about" routerLinkActive="active" ariaCurrentWhenActive="page">{{ 'О нас' | t }}</a>
   </nav>
   <div class="tools">
     <shop-camera-search />
-    <a class="bag-link" routerLink="/cart" routerLinkActive="active">{{ 'Корзина' | t }} ({{ store.count() }})</a>
+    <a class="bag-link" routerLink="/cart" routerLinkActive="active" ariaCurrentWhenActive="page">{{ 'Корзина' | t }} ({{ store.count() }})</a>
     <label>
-    <span class="sr-only">{{ 'Язык' | t }}</span>
-    <select [value]="i18n.language()" (change)="i18n.setLanguage($event)" [attr.aria-label]="'Язык' | t">
-      <option value="en">EN</option>
-      <option value="ru">RU</option>
-      <option value="uk">УКР</option>
-    </select>
+      <span class="sr-only">{{ 'Язык' | t }}</span>
+      <select [value]="i18n.language()" (change)="i18n.setLanguage($event)" [attr.aria-label]="'Язык' | t">
+        <option value="en">EN</option>
+        <option value="ru">RU</option>
+        <option value="uk">УКР</option>
+      </select>
     </label>
   </div>
 </header>
 <main><router-outlet /></main>
 <footer>
-  <a class="wordmark" routerLink="/home" aria-label="FARTOVIY">FARTOVIY<span aria-hidden="true">*</span></a>
-  <p>{{ 'Вещи с характером. Каждый день.' | t }}</p>
-  <div><a routerLink="/orders">{{ 'Мои заказы' | t }}</a><a routerLink="/catalog">{{ 'Каталог' | t }}</a></div>
-  <span class="edition">© FARTOVIY · 2026</span>
+  <div class="footer-brand">
+    <div>
+      <a routerLink="/home">CULT ARCHIVE</a>
+      <p>{{ 'Носи частичку кино.' | t }}</p>
+    </div>
+    <span>EST. 2026</span>
+  </div>
+  <div class="footer-sections">
+    <section>
+      <h2>{{ 'Коллекция и архив' | t }}</h2>
+      <ul>
+        <li><a routerLink="/catalog">{{ 'Наша коллекция' | t }}</a></li>
+        <li><a routerLink="/about">{{ 'О компании' | t }}</a></li>
+        <li>{{ 'Контакты' | t }}</li>
+      </ul>
+    </section>
+    <section>
+      <h2>{{ 'Информация' | t }}</h2>
+      <ul>
+        <li>{{ 'Доставка и возврат' | t }}</li>
+        <li>{{ 'Политика конфиденциальности' | t }}</li>
+        <li>{{ 'Условия использования' | t }}</li>
+      </ul>
+    </section>
+  </div>
+  <p class="copyright">© 2026 CULT ARCHIVE. {{ 'Все права защищены.' | t }}</p>
 </footer>

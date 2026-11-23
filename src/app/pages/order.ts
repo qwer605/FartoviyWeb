@@ -30,9 +30,9 @@ export class OrderPage {
     const order = this.order();
     if (!order) return;
     const t = (value: string) => this.i18n.text(value);
-    const text = ['FARTOVIY ' + order.number, this.date(order.createdAt),
-      ...order.items.map(item => `${t(item.name)} · ${t(item.size)} · ${item.qty} × ${this.store.money(item.unitPrice)} = ${this.store.money(item.total)}`),
-      `${t('Итого')}: ${this.store.money(order.total)}`, `${t('Имя')}: ${order.customer.name}`, `Email: ${order.customer.email}`,
+    const text = ['CULT ARCHIVE ' + order.number, this.date(order.createdAt),
+      ...order.items.map(item => `${t(item.name)} · ${t(item.size)} · ${item.qty} × ${this.store.money(item.unitPrice, item.currency)} = ${this.store.money(item.total, item.currency)}`),
+      `${t('Итого')}: ${this.store.formatTotals(order.items)}`, `${t('Имя')}: ${order.customer.name}`, `Email: ${order.customer.email}`,
       ...(order.customer.phone ? [`${t('Телефон')}: ${order.customer.phone}`] : []), ...(order.customer.note ? [`${t('Комментарий')}: ${order.customer.note}`] : [])].join('\n');
     try { await navigator.clipboard.writeText(text); this.copyStatus.set('Заказ скопирован. Теперь его можно отправить продавцу.'); }
     catch { this.copyStatus.set('Не удалось скопировать заказ. Вы можете скопировать данные со страницы вручную.'); }

@@ -1,0 +1,23 @@
+<section class="about" id="about">
+  <h1>{{ 'О нас' | t }}</h1>
+  <p>{{ 'Cult Archive собирает винтажную одежду, обувь и аксессуары из кино и сериалов.' | t }}</p>
+</section>
+
+<section class="lookbook" id="lookbook" aria-labelledby="lookbook-title">
+  <h2 id="lookbook-title">{{ 'Лукбук' | t }}</h2>
+  @let product = lookbookProduct();
+  <div class="lookbook-entry">
+    @if (product) {
+      <a class="lookbook-photo" [routerLink]="['/product', product.id]">
+        <img [src]="product.gallery?.[1] || product.image" [alt]="product.name | t" width="640" height="480">
+      </a>
+    }
+    <div class="lookbook-copy">
+      @if (product) {
+        <h3><a [routerLink]="['/product', product.id]">{{ product.name | t }}</a></h3>
+        @if (product.source) { <p>{{ 'Киноотсылка' | t }} · {{ product.source }}</p> }
+      }
+      <a class="catalog-link" routerLink="/catalog" [queryParams]="{ category: 'clothing' }">{{ 'Выбрать одежду' | t }}</a>
+    </div>
+  </div>
+</section>

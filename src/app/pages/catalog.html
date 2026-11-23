@@ -1,13 +1,11 @@
 <div class="catalog-layout">
 <aside>
-  <p class="eyebrow">FARTOVIY / THE EDIT</p>
   <h1>{{ 'Каталог' | t }}</h1>
   <nav [attr.aria-label]="'Категории' | t">
     @for (item of categories; track item.id) {
       <a routerLink="/catalog" [queryParams]="item.id === 'all' ? {} : { category: item.id }" [class.selected]="category() === item.id" [attr.aria-current]="category() === item.id ? 'page' : null">{{ item.label | t }} <span>({{ count(item.id) }})</span></a>
     }
   </nav>
-  <p class="sidebar-note">{{ 'Вещи с характером. Каждый день.' | t }}</p>
 </aside>
 <div class="catalog-content">
 @if (store.loading()) {
@@ -16,7 +14,7 @@
   <p role="alert">{{ 'Не удалось открыть локальный каталог. Повторите попытку.' | t }}</p>
   <button type="button" (click)="store.loadProducts()">{{ 'Повторить' | t }}</button>
 } @else {
-  <div class="catalog-heading"><p>{{ 'Товаров:' | t }} {{ visibleProducts().length }}</p><span>{{ 'Выбрано для тебя' | t }} ↘</span></div>
+  <p class="catalog-count">{{ 'Товаров:' | t }} {{ visibleProducts().length }}</p>
   <section class="products" [attr.aria-label]="'Список товаров' | t">
     @for (product of visibleProducts(); track product.id) {
       <shop-product-card [product]="product" />

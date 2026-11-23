@@ -1,9 +1,9 @@
-import type { Product } from './catalog';
+import type { Currency, Product } from './catalog';
 
 export interface Customer { name: string; email: string; phone: string; note: string; }
-export interface OrderItemRequest { id: string; size: string; qty: number; expectedPrice: number; }
+export interface OrderItemRequest { id: string; size: string; qty: number; expectedPrice: number; expectedCurrency?: Currency; }
 export interface OrderDraft { id: string; customer: Customer; items: OrderItemRequest[]; }
-export interface OrderItem { id: string; name: string; size: string; qty: number; unitPrice: number; total: number; }
+export interface OrderItem { id: string; name: string; size: string; qty: number; unitPrice: number; total: number; currency?: Currency; }
 export interface Order {
   id: string;
   number: string;
@@ -11,7 +11,7 @@ export interface Order {
   status: 'saved';
   customer: Customer;
   items: OrderItem[];
-  total: number;
+  total: number | null;
 }
 
 export class OrderError extends Error {
@@ -35,7 +35,8 @@ export function validateOrderDraft(draft: OrderDraft): OrderDraft {
   for (const item of draft.items) {
     if (!item || typeof item.id !== 'string' || !item.id || typeof item.size !== 'string' || !item.size
       || !Number.isInteger(item.qty) || item.qty < 1 || item.qty > 99
-      || !Number.isFinite(item.expectedPrice) || item.expectedPrice < 0) throw new OrderError('INVALID_CART');
+      || !Number.isFinite(item.expectedPrice) || item.expectedPrice < 0
+      || (item.expectedCurrency !== undefined && item.expectedCurrency !== 'EUR')) throw new OrderError('INVALID_CART');
     const key = JSON.stringify([item.id, item.size]);
     if (keys.has(key)) throw new OrderError('INVALID_CART');
     keys.add(key);
@@ -46,17 +47,23 @@ export function validateOrderDraft(draft: OrderDraft): OrderDraft {
 
 export function buildOrder(draft: OrderDraft, products: readonly Product[], createdAt = new Date().toISOString()): Order {
   const checked = validateOrderDraft(draft);
-  let totalCents = 0;
+  const totals = new Map<Currency | undefined, number>();
   const items = checked.items.map(item => {
     const product = products.find(product => product.id === item.id);
-    if (!product || !product.sizes.includes(item.size) || product.price !== item.expectedPrice) throw new OrderError('CATALOG_CHANGED');
+    if (!product || !product.sizes.includes(item.size) || product.price !== item.expectedPrice
+      || product.currency !== item.expectedCurrency) throw new OrderError('CATALOG_CHANGED');
     const cents = Math.round(product.price * 100);
     if (!Number.isSafeInteger(cents) || Math.abs(cents / 100 - product.price) > 1e-8) throw new OrderError('INVALID_CART');
     const lineCents = cents * item.qty;
-    totalCents += lineCents;
+    const totalCents = (totals.get(product.currency) ?? 0) + lineCents;
     if (!Number.isSafeInteger(totalCents)) throw new OrderError('INVALID_CART');
-    return { id: product.id, name: product.name, size: item.size, qty: item.qty, unitPrice: cents / 100, total: lineCents / 100 };
+    totals.set(product.currency, totalCents);
+    return {
+      id: product.id, name: product.name, size: item.size, qty: item.qty, unitPrice: cents / 100, total: lineCents / 100,
+      ...(product.currency && { currency: product.currency })
+    };
   });
   return { id: checked.id, number: 'FRT-' + createdAt.slice(0, 10).replaceAll('-', '') + '-' + checked.id.replaceAll('-', '').slice(0, 8).toUpperCase(),
-    createdAt, status: 'saved', customer: checked.customer, items, total: totalCents / 100 };
+    createdAt, status: 'saved', customer: checked.customer, items,
+    total: totals.size === 1 ? totals.get(items[0].currency)! / 100 : null };
 }

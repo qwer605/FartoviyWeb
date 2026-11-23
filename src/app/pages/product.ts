@@ -16,6 +16,11 @@ export class ProductPage {
   private readonly route = inject(ActivatedRoute);
   private readonly params = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
   readonly product = computed(() => this.store.product(this.params().get('id') ?? ''));
+  readonly photos = computed(() => {
+    const product = this.product();
+    return product ? [product.image, ...(product.gallery ?? [])] : [];
+  });
+  readonly photoIndex = signal(0);
   readonly size = signal('');
   readonly message = signal('');
   readonly zoomed = signal(false);
@@ -26,7 +31,13 @@ export class ProductPage {
       this.size.set(product?.sizes[0] ?? '');
       this.message.set('');
       this.zoomed.set(false);
+      this.photoIndex.set(0);
     });
+  }
+
+  selectPhoto(index: number): void {
+    this.photoIndex.set(index);
+    this.zoomed.set(false);
   }
 
   selectSize(value: string): void {

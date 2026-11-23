@@ -1,8 +1,8 @@
 :host { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; }
 button { font: inherit; border: 0; border-radius: 0; background: transparent; color: var(--wine); cursor: pointer; }
-.camera-button { display: grid; place-items: center; width: 36px; height: 40px; padding: 7px; }
+.camera-button { display: grid; place-items: center; width: 44px; height: 44px; padding: 8px; }
 button:focus-visible { outline: 2px solid var(--wine); outline-offset: 2px; }
 button:disabled { opacity: .55; cursor: wait; }
-.cancel { padding: 8px; font-size: 11px; }
+.cancel { min-height: 44px; padding: 8px; font-size: 12px; }
 .feedback { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 5; width: max-content; max-width: calc(100vw - 40px); padding: 14px 20px; background: var(--wine); color: var(--paper); font-size: 12px; border: 1px solid var(--paper); }
 .error { background: #73202a; }

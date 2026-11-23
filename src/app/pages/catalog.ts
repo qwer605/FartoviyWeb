@@ -24,6 +24,6 @@ export class CatalogPage {
     const value = this.params().get('category');
     return this.categories.some(category => category.id === value) ? value! : 'all';
   });
-  readonly visibleProducts = computed(() => this.store.products().filter(product => this.category() === 'all' || product.category === this.category()));
-  count(category: string): number { return this.store.products().filter(product => category === 'all' || product.category === category).length; }
+  readonly visibleProducts = computed(() => this.store.collection().filter(product => this.category() === 'all' || product.category === this.category()));
+  count(category: string): number { return this.store.collection().filter(product => category === 'all' || product.category === category).length; }
 }

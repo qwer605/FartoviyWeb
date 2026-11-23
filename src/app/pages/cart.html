@@ -22,14 +22,14 @@
             </div>
           </div>
           <div class="item-total">
-            <p><strong>{{ store.money(product.price * item.qty) }}</strong></p>
+            <p><strong>{{ store.money(product.price * item.qty, product.currency) }}</strong></p>
             <button type="button" (click)="store.remove(item)" [disabled]="store.submittingOrder()" [attr.aria-label]="('Удалить' | t) + ': ' + (product.name | t)">{{ 'Удалить' | t }}</button>
           </div>
         </li>
       }
     }
   </ul>
-  <p class="total"><strong>{{ 'Итого' | t }}: {{ store.money(store.total()) }}</strong></p>
+  <p class="total"><strong>{{ 'Итого' | t }}: {{ store.cartTotal() }}</strong></p>
   <p><a class="checkout-link" routerLink="/checkout">{{ 'Оформить заказ' | t }}</a></p>
 } @else {
   <p>{{ 'Корзина пуста.' | t }}</p>

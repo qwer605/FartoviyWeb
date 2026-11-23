@@ -1,36 +1,77 @@
 import { test, expect } from '@playwright/test';
 
-test('home links lead to the collection, category filters and editorial sections', async ({ page }, testInfo) => {
+test('opens Home by default and links to Catalog and the combined About and Lookbook page', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('./');
   await expect(page).toHaveURL(/#\/home$/);
-  await expect(page.locator('.hero h1')).toHaveText('FARTOVIY*');
-  await expect(page.locator('.featured-grid shop-product-card')).toHaveCount(4);
+  await expect(page.getByRole('heading', { name: 'Cult Archive', exact: true })).toBeVisible();
   await expect(page.locator('.hero-image img')).toBeVisible();
+  await expect(page.locator('.featured-grid shop-product-card')).toHaveCount(4);
+  const featuredBag = page.locator('shop-product-card').first();
+  await expect(featuredBag.getByRole('heading')).toHaveText('Louis Vuitton Galliera Damier Azur');
+  await expect(featuredBag.locator('.description')).toContainText('Damier Azur checkerboard canvas');
+  await expect(featuredBag.getByText('€3,490', { exact: true })).toBeVisible();
+  await expect(featuredBag.getByText('Inspiration · “Gossip Girl”', { exact: true })).toBeVisible();
+  await expect(page.locator('.featured-grid').getByText('Screen reference · “Friends” 1998', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('home-desktop.png'), fullPage: true });
-  await page.getByRole('link', { name: 'Lookbook', exact: true }).click();
-  await expect(page).toHaveURL(/#\/home#lookbook$/);
+
+  await page.getByRole('link', { name: 'Shop the collection', exact: true }).click();
+  await expect(page).toHaveURL(/#\/catalog$/);
+  await expect(page.getByRole('heading', { name: 'Catalog', exact: true })).toBeVisible();
+
+  const header = page.getByRole('banner');
+  const wordmark = header.getByRole('link', { name: 'Cult Archive', exact: true });
+  expect((await wordmark.boundingBox()).width).toBeGreaterThan(180);
+  await header.getByRole('link', { name: 'About', exact: true }).click();
+  await expect(page).toHaveURL(/#\/about$/);
+  await expect(page.getByRole('heading', { name: 'About', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Lookbook', exact: true })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Damani Royal leather jacket', exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('about-desktop.png'), fullPage: true });
+
+  await wordmark.click();
+  await expect(page).toHaveURL(/#\/home$/);
+  await page.goto('#/home#lookbook');
+  await expect(page).toHaveURL(/#\/about#lookbook$/);
   await expect(page.locator('#lookbook')).toBeInViewport({ ratio: 0.8 });
   await page.getByRole('link', { name: /Explore clothing/ }).click();
   await expect(page).toHaveURL(/category=clothing/);
-  await expect(page.locator('shop-product-card')).toHaveCount(3);
+  await expect(page.locator('shop-product-card')).toHaveCount(1);
   const categories = page.getByRole('navigation', { name: 'Categories' });
   await categories.getByRole('link', { name: /Accessories/ }).click();
-  await expect(page.locator('shop-product-card')).toHaveCount(4);
-  await expect(page.getByRole('heading', { name: 'Checkerboard shoulder bag', exact: true })).toBeVisible();
+  await expect(page.locator('shop-product-card')).toHaveCount(6);
+  await expect(page.getByRole('heading', { name: 'Chloe tourist bag blue', exact: true })).toBeVisible();
+  await expect(page.locator('.products').getByText('Screen reference · “Friends” 1998', { exact: true })).toBeVisible();
+  const bag = page.getByRole('heading', { name: 'Louis Vuitton Galliera Damier Azur', exact: true });
+  await expect(bag.getByRole('link')).toHaveAttribute('href', '#/product/checker-bag');
+  await expect(page.locator('.products').getByText('Inspiration · “Gossip Girl”', { exact: true })).toBeVisible();
   await page.reload();
   await expect(categories.getByRole('link', { name: /Accessories/ })).toHaveAttribute('aria-current', 'page');
   await categories.getByRole('link', { name: /All pieces/ }).click();
-  await expect(page.locator('shop-product-card')).toHaveCount(9);
+  await expect(page.locator('shop-product-card')).toHaveCount(11);
   await page.screenshot({ path: testInfo.outputPath('catalog-desktop.png'), fullPage: true });
 });
 
 test('mobile design retains native capture, category filters, sizing and product details', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('#/home');
-  await expect(page.locator('.featured-grid shop-product-card')).toHaveCount(4);
-  await page.screenshot({ path: testInfo.outputPath('home-mobile.png'), fullPage: true });
+  await page.goto('#/about');
+  await expect(page.getByRole('heading', { name: 'Lookbook', exact: true })).toBeVisible();
+  const wordmark = page.getByRole('banner').getByRole('link', { name: 'Cult Archive', exact: true });
+  expect((await wordmark.boundingBox()).width).toBeGreaterThan(110);
+  const headerControls = page.locator('header nav a, header .bag-link, header .camera-button, header select');
+  expect(await headerControls.evaluateAll(controls => controls.every(control => control.getBoundingClientRect().height >= 44))).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('about-mobile.png'), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.goto('#/product/dolce-gabbana-vintage-vine-clutch-2002');
+  const gallery = page.getByRole('group', { name: 'Product photos' });
+  const mainPhoto = page.locator('.product-image img');
+  await expect(gallery.getByRole('button')).toHaveCount(4);
+  await gallery.getByRole('button', { name: 'Photo 4' }).click();
+  await expect(mainPhoto).toHaveAttribute('src', /12-19-55\.jpg$/);
+  await expect.poll(() => mainPhoto.evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
+  await expect(page.locator('.product-info .description').first()).toContainText('A wine-red evening clutch');
+  await expect(page.locator('.screen-reference')).toHaveText('Screen reference “Sex and the City”');
+  await expect(page.getByText('€8,300', { exact: true })).toBeVisible();
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Search by photo', exact: true }).click();
   await (await chooser).setFiles([]);
@@ -46,10 +87,12 @@ test('mobile design retains native capture, category filters, sizing and product
   await page.getByRole('link', { name: 'Go to cart', exact: true }).click();
   await expect(page.getByText('Size: 39', { exact: true })).toBeVisible();
   await page.goto('#/product/checker-bag');
-  await expect(page.getByRole('img', { name: 'Checkerboard shoulder bag', exact: true })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Louis Vuitton Galliera Damier Azur', exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('bag-mobile.png'), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('combobox', { name: 'Language', exact: true }).selectOption('ru');
-  await expect(page.getByRole('heading', { name: 'Сумка в шахматную клетку', exact: true })).toBeVisible();
+  await expect(page.locator('.product-info .screen-reference')).toHaveText('Вдохновение «Сплетница»');
+  await expect(page.locator('.product-info .description')).toContainText('Плечевая сумка с мягким силуэтом хобо');
+  await page.setViewportSize({ width: 320, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

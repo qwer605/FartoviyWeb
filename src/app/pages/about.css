@@ -1,0 +1,23 @@
+:host { display: block; padding: 44px 36px 56px; }
+h1, h2, h3, p { margin: 0; }
+h1, h2 { font-family: Georgia, serif; font-weight: 400; line-height: 1.1; letter-spacing: -.03em; }
+h1 { font-size: clamp(38px, 4vw, 54px); }
+h2 { font-size: clamp(28px, 3vw, 38px); margin-bottom: 16px; }
+.about p { max-width: 60ch; margin-top: 14px; color: var(--muted); font-size: 16px; }
+.lookbook { margin-top: 40px; }
+.lookbook-entry { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); background: var(--panel); }
+.lookbook-entry:has(.lookbook-copy:only-child) { grid-template-columns: 1fr; }
+.lookbook-photo { display: block; }
+.lookbook-photo img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.lookbook-copy { align-self: center; padding: clamp(22px, 5vw, 64px); }
+h3 { font: 400 clamp(24px, 3vw, 38px) / 1.15 Georgia, serif; }
+h3 a { text-decoration: none; }
+h3 a:hover { text-decoration: underline; }
+.lookbook-copy p { margin-top: 10px; color: var(--muted); }
+.catalog-link { display: inline-block; }
+.lookbook-copy h3 ~ .catalog-link { margin-top: 22px; }
+@media (max-width: 650px) {
+  :host { padding: 30px 18px 40px; }
+  .lookbook { margin-top: 30px; }
+  .lookbook-entry { grid-template-columns: 1fr; }
+}

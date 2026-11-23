@@ -20,7 +20,7 @@ test('camera icon directly invokes native capture without a popup, video stream 
   page.on('request', request => { if (request.url().includes('/models/')) modelRequests.push(request.url()); });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('#/catalog');
-  await expect(page.getByText('Products: 9', { exact: true })).toBeVisible();
+  await expect(page.getByText('Products: 11', { exact: true })).toBeVisible();
   const chooser = page.waitForEvent('filechooser');
   await cameraButton(page).click();
   const nativeChooser = await chooser;
@@ -43,11 +43,13 @@ test('a captured bag photo runs real ONNX inference and automatically opens the 
   await page.goto('#/catalog');
   await capture(page, bag);
   await expect(page).toHaveURL(/#\/product\/checker-bag$/);
-  await expect(page.getByRole('heading', { name: 'Checkerboard shoulder bag', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Louis Vuitton Galliera Damier Azur', exact: true })).toBeVisible();
   await expect(search(page).getByRole('status')).toHaveCount(0);
   expect(external).toEqual([]);
   await page.getByRole('button', { name: 'Add to cart', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Product added to cart.');
+  await page.getByRole('link', { name: 'Go to cart', exact: true }).click();
+  await expect(page.locator('.total')).toHaveText('Total: €3,490');
 });
 
 test('nonmatching or invalid photos stay on the current page and can be replaced by another capture', async ({ page }) => {
@@ -119,7 +121,7 @@ test('navigation cancels pending photo processing without a later product redire
 
 test('a missing catalog product does not navigate to a broken page after capture', async ({ page }) => {
   await page.goto('#/catalog');
-  await expect(page.getByText('Products: 9', { exact: true })).toBeVisible();
+  await expect(page.getByText('Products: 11', { exact: true })).toBeVisible();
   await page.evaluate(() => new Promise((resolve, reject) => {
     const request = indexedDB.open('fartoviy-products');
     request.onsuccess = () => {
@@ -130,7 +132,7 @@ test('a missing catalog product does not navigate to a broken page after capture
     };
   }));
   await page.reload();
-  await expect(page.getByText('Products: 8', { exact: true })).toBeVisible();
+  await expect(page.getByText('Products: 10', { exact: true })).toBeVisible();
   await capture(page, bag);
   await expect(search(page).getByRole('alert')).toHaveText('This bag is currently unavailable in the catalog.');
   await expect(page).toHaveURL(/#\/catalog$/);

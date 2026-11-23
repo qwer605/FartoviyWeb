@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { IDBFactory } from 'fake-indexeddb';
-import { products, checkerBag, CHECKER_BAG_ID } from '../src/app/core/catalog.ts';
+import { archiveProducts, products, checkerBag, CHECKER_BAG_ID } from '../src/app/core/catalog.ts';
 import { ProductDatabase } from '../src/app/core/product-database.ts';
 
 test('creates a catalog from the initial products and supports reads by ID', async t => {
@@ -68,9 +68,9 @@ test('recovers after database access is temporarily denied', async t => {
   assert.equal((await database.list()).length, products.length);
 });
 
-async function createVersionTwo(factory, records) {
+async function createExistingDatabase(factory, version, records) {
   return new Promise((resolve, reject) => {
-    const request = factory.open('fartoviy-products', 2);
+    const request = factory.open('fartoviy-products', version);
     request.onupgradeneeded = () => {
       const store = request.result.createObjectStore('products', { keyPath: 'id' });
       store.createIndex('category', 'category');
@@ -86,13 +86,13 @@ async function createVersionTwo(factory, records) {
 
 test('v3 adds the camera-search bag once while preserving edited products, deletions and orders', async t => {
   const factory = new IDBFactory();
-  await createVersionTwo(factory, [{ ...products[0], price: 1234, name: 'Local product' }]);
+  await createExistingDatabase(factory, 2, [{ ...products[0], price: 1234, name: 'Local product' }]);
   const database = new ProductDatabase(products, factory);
   assert.deepEqual(await database.get(CHECKER_BAG_ID), checkerBag);
   assert.equal((await database.get('runner')).price, 1234);
   assert.equal((await database.get('runner')).name, 'Local product');
   assert.equal(await database.get('mini'), undefined);
-  assert.equal((await database.list()).length, 2);
+  assert.equal((await database.list()).length, archiveProducts.length + 2);
   assert.equal((await database.listOrders())[0].id, 'saved-order');
   await database.remove(CHECKER_BAG_ID);
   database.close();
@@ -103,10 +103,70 @@ test('v3 adds the camera-search bag once while preserving edited products, delet
 
 test('v3 preserves an existing camera-search product instead of overwriting local fields', async t => {
   const factory = new IDBFactory();
-  await createVersionTwo(factory, [{ ...checkerBag, price: 999, name: 'My bag' }]);
+  await createExistingDatabase(factory, 2, [{ ...checkerBag, price: 999, name: 'My bag' }]);
   const database = new ProductDatabase(products, factory);
   t.after(() => database.close());
   assert.equal((await database.get(CHECKER_BAG_ID)).price, 999);
   assert.equal((await database.get(CHECKER_BAG_ID)).name, 'My bag');
-  assert.equal((await database.list()).length, 1);
+  assert.equal((await database.list()).length, archiveProducts.length + 1);
+});
+
+test('v4 adds the archive to an existing catalog without replacing local records or orders', async t => {
+  const factory = new IDBFactory();
+  const [first, second] = archiveProducts;
+  const local = { ...first, price: 1234 };
+  await createExistingDatabase(factory, 3, [local]);
+  const database = new ProductDatabase(products, factory);
+  assert.equal((await database.list()).length, archiveProducts.length);
+  assert.deepEqual(await database.get(first.id), local);
+  assert.deepEqual(await database.get(second.id), second);
+  assert.equal(await database.get(CHECKER_BAG_ID), undefined);
+  assert.equal((await database.listOrders())[0].id, 'saved-order');
+  await database.remove(second.id);
+  database.close();
+  const reopened = new ProductDatabase(products, factory);
+  t.after(() => reopened.close());
+  assert.equal(await reopened.get(second.id), undefined);
+});
+
+test('v5 labels the saved camera-search bag price in euros and preserves its amount and other fields', async t => {
+  const factory = new IDBFactory();
+  const local = { ...checkerBag, currency: undefined, price: 3500, name: 'Local bag' };
+  await createExistingDatabase(factory, 4, [local, products[0]]);
+  const database = new ProductDatabase(products, factory);
+  t.after(() => database.close());
+  assert.deepEqual(await database.get(CHECKER_BAG_ID), { ...local, currency: 'EUR' });
+  assert.deepEqual(await database.get(products[0].id), products[0]);
+  assert.equal((await database.getOrder('saved-order')).total, 1234);
+});
+
+test('v6 adds descriptions and the Galliera name to the existing catalog while preserving local text and prices', async t => {
+  const factory = new IDBFactory();
+  const [chloe, cartier, , , , boots] = archiveProducts;
+  const savedCartier = { ...cartier, description: 'My description', price: 6000 };
+  await createExistingDatabase(factory, 5, [
+    {
+      ...checkerBag, name: 'Сумка в шахматную клетку', price: 3500, inspiration: undefined,
+      description: 'Светлая сумка с тёмным шахматным узором, регулируемым ремнём и бежевой отделкой.'
+    },
+    { ...chloe, description: '', source: 'From “Friends” 1998' },
+    savedCartier,
+    { ...boots, description: '', source: 'From “Cruella De Ville” 1996' }
+  ]);
+  const database = new ProductDatabase(products, factory);
+  t.after(() => database.close());
+  assert.deepEqual(await database.get(CHECKER_BAG_ID), { ...checkerBag, price: 3500 });
+  assert.deepEqual(await database.get(chloe.id), chloe);
+  assert.deepEqual(await database.get(cartier.id), savedCartier);
+  assert.deepEqual(await database.get(boots.id), boots);
+  assert.equal((await database.getOrder('saved-order')).total, 1234);
+});
+
+test('v7 adds the Galliera inspiration to the existing catalog record', async t => {
+  const factory = new IDBFactory();
+  const savedBag = { ...checkerBag, inspiration: undefined, price: 3500 };
+  await createExistingDatabase(factory, 6, [savedBag]);
+  const database = new ProductDatabase(products, factory);
+  t.after(() => database.close());
+  assert.deepEqual(await database.get(CHECKER_BAG_ID), { ...checkerBag, price: 3500 });
 });

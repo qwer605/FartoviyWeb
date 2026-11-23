@@ -12,7 +12,7 @@
         <a [routerLink]="['/orders', order.id]">{{ order.number }}</a>
         <time [attr.datetime]="order.createdAt">{{ date(order.createdAt) }}</time>
         <span>{{ 'Сохранён на этом устройстве' | t }}</span>
-        <strong>{{ store.money(order.total) }}</strong>
+        <strong>{{ store.formatTotals(order.items) }}</strong>
       </li>
     } @empty { <li>{{ 'Сохранённых заказов пока нет.' | t }}</li> }
   </ul>

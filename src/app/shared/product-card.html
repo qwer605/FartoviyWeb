@@ -4,7 +4,16 @@
     <span class="view-arrow" aria-hidden="true">↗</span>
   </a>
   <div class="product-meta">
-  <h2><a [routerLink]="['/product', product().id]">{{ product().name | t }}</a></h2>
-  <p>{{ store.money(product().price) }}</p>
+    <h2><a [routerLink]="['/product', product().id]">{{ product().name | t }}</a></h2>
+    <p class="price">{{ store.money(product().price, product().currency) }}</p>
+    @if (product().description; as description) {
+      <p class="description">{{ description | t }}</p>
+    }
+    @if (product().source; as source) {
+      <p class="screen-reference">{{ 'Киноотсылка' | t }} · {{ source }}</p>
+    }
+    @if (product().inspiration; as inspiration) {
+      <p class="screen-reference">{{ 'Вдохновение' | t }} · {{ inspiration | t }}</p>
+    }
   </div>
 </article>

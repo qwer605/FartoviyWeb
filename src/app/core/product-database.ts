@@ -1,11 +1,12 @@
-import { CHECKER_BAG_ID } from './catalog';
+import { archiveProducts, CHECKER_BAG_ID } from './catalog';
 import type { Product } from './catalog';
 import { buildOrder, validateOrderDraft } from './order';
 import type { Order, OrderDraft } from './order';
 
 export const PRODUCT_DATABASE_NAME = 'fartoviy-products';
-const VERSION = 3;
+const VERSION = 7;
 const STORE = 'products';
+const archiveIds = new Set(archiveProducts.map(product => product.id));
 
 export function validateProduct(value: unknown): asserts value is Product {
   if (!value || typeof value !== 'object') throw new Error('Invalid product');
@@ -15,6 +16,11 @@ export function validateProduct(value: unknown): asserts value is Product {
   }
   if (typeof product['description'] !== 'string' || typeof product['price'] !== 'number'
     || !Number.isFinite(product['price']) || product['price'] < 0
+    || (product['currency'] !== undefined && product['currency'] !== 'EUR')
+    || (product['source'] !== undefined && typeof product['source'] !== 'string')
+    || (product['inspiration'] !== undefined && typeof product['inspiration'] !== 'string')
+    || (product['gallery'] !== undefined && (!Array.isArray(product['gallery'])
+      || !product['gallery'].every(image => typeof image === 'string' && image.trim())))
     || !Array.isArray(product['sizes']) || !product['sizes'].length
     || !product['sizes'].every(size => typeof size === 'string' && size.trim())) {
     throw new Error('Invalid product details');
@@ -125,6 +131,46 @@ export class ProductDatabase {
               const store = request.transaction!.objectStore(STORE);
               const existing = store.get(CHECKER_BAG_ID);
               existing.onsuccess = () => { if (existing.result === undefined) store.add(bag); };
+            }
+          }
+          if (event.oldVersion > 0 && event.oldVersion < 4) {
+            const store = request.transaction!.objectStore(STORE);
+            for (const product of this.seed) {
+              if (!archiveIds.has(product.id)) continue;
+              validateProduct(product);
+              const existing = store.get(product.id);
+              existing.onsuccess = () => { if (existing.result === undefined) store.add(product); };
+            }
+          }
+          if (event.oldVersion > 0 && event.oldVersion < 7) {
+            const store = request.transaction!.objectStore(STORE);
+            const needsDescriptions = event.oldVersion < 6;
+            for (const product of this.seed) {
+              const isCheckerBag = product.id === CHECKER_BAG_ID;
+              if (!isCheckerBag && !(needsDescriptions && archiveIds.has(product.id))) continue;
+              const existing = store.get(product.id);
+              existing.onsuccess = () => {
+                const saved = existing.result as Product | undefined;
+                if (!saved) return;
+                if (isCheckerBag && product.inspiration) saved.inspiration ??= product.inspiration;
+                if (needsDescriptions) {
+                  if (isCheckerBag) {
+                    saved.currency ??= 'EUR';
+                    if (saved.name === 'Сумка в шахматную клетку') saved.name = product.name;
+                    if (saved.description === 'Светлая сумка с тёмным шахматным узором, регулируемым ремнём и бежевой отделкой.') {
+                      saved.description = product.description;
+                    }
+                  }
+                  saved.description ||= product.description;
+                  if (saved.source?.startsWith('From ')) {
+                    const previous = saved.source.slice(5);
+                    saved.source = previous === '“Cruella De Ville” 1996' || previous === '“Sex and The City”'
+                      ? product.source ?? previous
+                      : previous;
+                  }
+                }
+                store.put(saved);
+              };
             }
           }
         } catch (error) { request.transaction?.abort(); fail(error); }
